@@ -755,6 +755,12 @@ class Toybox:
 
         os.makedirs(Path(dest_path).parent, exist_ok=True)
 
+        # -- This MOVES, so the folder is gone from the dependency's checkout afterwards.
+        # -- Say so: otherwise the assets look orphaned — files in source/toybox_assets/
+        # -- with no counterpart anywhere in toyboxes/ — and the natural reading is that
+        # -- they are stale leftovers from an earlier run rather than this one's output.
+        print('       - assets: ' + os.path.relpath(source_path) + ' -> ' + os.path.relpath(dest_path) + ' (moved).')
+
         shutil.move(source_path, dest_path)
 
     @classmethod

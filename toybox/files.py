@@ -127,9 +127,15 @@ class Files:
                 os.makedirs(os.path.dirname(destination), exist_ok=True)
 
                 try:
-                    # -- A link keeps it free and always current. Windows without developer
-                    # -- mode refuses, so fall back to a copy rather than failing the build.
-                    os.symlink(os.path.abspath(source), destination, target_is_directory=True)
+                    # -- A link keeps it free and always current. It is RELATIVE to the
+                    # -- shim, so the project survives being moved, archived and restored,
+                    # -- or built at a path other than the one it resolved at — a CI cache
+                    # -- restore and a container bind-mount both do exactly that, and an
+                    # -- absolute link would dangle with nothing to say why.
+                    # -- Windows without developer mode refuses to link at all, so fall
+                    # -- back to a copy rather than failing the build.
+                    relative = os.path.relpath(source, os.path.dirname(destination))
+                    os.symlink(relative, destination, target_is_directory=True)
                 except (OSError, NotImplementedError, AttributeError):
                     shutil.copytree(source, destination)
 
