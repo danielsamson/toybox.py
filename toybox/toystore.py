@@ -37,6 +37,11 @@ FIELDS
     global     name to bind the imported value to. Omit for libraries that publish their
                own global; setting it there would shadow their API with whatever the file
                returns (usually nil).
+    libpath    for a library that imports its OWN files by a path relative to the PROJECT
+               root (rather than to itself), a map of {expected path: subfolder in the
+               repo}. toybox builds a search root under toyboxes/.libpath/ containing
+               those paths, and you compile with `pdc -I toyboxes/.libpath`. This is what
+               makes an engine written to be copied into source/ usable as a dependency.
     note       a caveat a user needs before adding it.
 
 A consuming project always overrides this table — see `config.imports` in the Boxfile —
@@ -105,6 +110,13 @@ KNOWN = {
     },
 
     # ── Playdate frameworks that need an adaptation ──────────────────────────
+    'noblerobot/nobleengine': {
+        'provides': 'Game engine: scenes, transitions, input, settings, save data',
+        'entry': 'Noble',
+        'libpath': {'libraries/noble': ''},
+        'note': 'compile with `pdc -I toyboxes/.libpath` — it imports its own modules by '
+                'project-root path. No global: Noble.lua publishes its own',
+    },
     'gamesrightmeow/playbit': {
         'provides': 'Game framework: its own graphics, timer, vector and geometry modules',
         'entry': 'playbit/playbit', 'global': 'playbit',
@@ -169,9 +181,6 @@ KNOWN = {
 
 # Checked and NOT usable, recorded so nobody re-derives it.
 REJECTED = {
-    'noblerobot/nobleengine': 'Noble.lua imports its own modules by project-root-relative '
-                              'path ("libraries/noble/modules/..."), which cannot resolve from '
-                              'inside toyboxes/. Needs an upstream change or a vendored copy.',
     'yonaba/jumper': 'ships only examples/ and specs/ on its default branch — no library tree.',
     'neil-morrison44/drawdate': 'a JavaScript project, not a Lua library.',
     'pictogrammers/memory': 'an icon set, not a Lua library.',
@@ -179,6 +188,11 @@ REJECTED = {
 }
 
 ADAPTATION_FIELDS = ('entry', 'global')
+
+
+def libPathsFor(url) -> dict:
+    """{path to create: subfolder of the repo it points at}, or None."""
+    return KNOWN.get(_key(url), {}).get('libpath')
 
 
 def _key(url) -> str:

@@ -10,7 +10,7 @@ from typing import List
 from pathlib import Path
 
 from .boxfile import Boxfile
-from .toystore import adaptationFor
+from .toystore import adaptationFor, libPathsFor
 from .dependency import Dependency
 from .paths import Paths
 from .utils import Utils
@@ -88,6 +88,54 @@ class Files:
                     return path_without_extension
 
         return None
+
+    @classmethod
+    def generateLibPathShim(cls, dependencies: List[Dependency]) -> List[str]:
+        """Build a pdc search root for libraries that import their own files by PROJECT path.
+
+        Some libraries — engines especially — are written to be copied into your source
+        tree, so their internal imports read like "libraries/noble/modules/X". From inside
+        toyboxes/ those cannot resolve, which is what makes such a library look impossible
+        to use as a dependency. It is not: pdc takes -I search roots, so we build a root
+        under toyboxes/.libpath/ where each library appears at the path it expects, and the
+        game compiles with `pdc -I toyboxes/.libpath`.
+
+        Returns the list of paths created, so the caller can tell the user about the flag.
+        """
+        shim_root = os.path.join(Paths.toyboxesFolder(), '.libpath')
+
+        if os.path.exists(shim_root):
+            shutil.rmtree(shim_root, ignore_errors=True)
+
+        created = []
+
+        for dep in dependencies:
+            lib_paths = libPathsFor(dep.url)
+            if not lib_paths:
+                continue
+
+            for expected_path, sub_folder in lib_paths.items():
+                source = dep.toyboxFolder()
+                if sub_folder:
+                    source = os.path.join(source, sub_folder)
+
+                if not os.path.exists(source):
+                    print('Warning: libpath for \'' + dep.url.repo_name + '\' points at \'' + str(sub_folder) + '\', which is not in this version. Ignoring it.')
+                    continue
+
+                destination = os.path.join(shim_root, *expected_path.split('/'))
+                os.makedirs(os.path.dirname(destination), exist_ok=True)
+
+                try:
+                    # -- A link keeps it free and always current. Windows without developer
+                    # -- mode refuses, so fall back to a copy rather than failing the build.
+                    os.symlink(os.path.abspath(source), destination, target_is_directory=True)
+                except (OSError, NotImplementedError, AttributeError):
+                    shutil.copytree(source, destination)
+
+                created.append(expected_path)
+
+        return created
 
     @classmethod
     def generateLuaIncludeFile(cls, dependencies: List[Dependency]):

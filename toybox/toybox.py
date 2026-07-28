@@ -458,6 +458,12 @@ class Toybox:
             if os.path.exists(folder):
                 Files.generateReadMeFileIn(folder)
                 Files.generateLuaIncludeFile(self.dependencies)
+
+                lib_paths = Files.generateLibPathShim(self.dependencies)
+                if len(lib_paths) != 0:
+                    print('')
+                    print('Some dependencies import their own files by project path (' + ', '.join(lib_paths) + ').')
+                    print('Compile with:  pdc -I toyboxes/.libpath source <name>.pdx')
                 Files.generateMakefile(self.dependencies)
                 Files.generateIncludeFile(self.dependencies)
                 Files.generateLuacheckFile(self.dependencies)

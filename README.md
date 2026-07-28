@@ -266,6 +266,7 @@ Known **toyboxes**, verified alive as of July 2026 — PRs adding entries are we
 | [lua-star](https://github.com/wesleywerner/lua-star) | `toybox add wesleywerner/lua-star` | A* pathfinding, pure Lua — imported as `luastar` |
 | [lume](https://github.com/rxi/lume) | `toybox add rxi/lume` | Utility functions geared towards game development — imported as `lume` |
 | [middleclass](https://github.com/kikito/middleclass) | `toybox add kikito/middleclass` | OOP: inheritance, metamethods, class variables, mixins — imported as `middleclass` |
+| [nobleengine](https://github.com/noblerobot/nobleengine) | `toybox add noblerobot/nobleengine` | Game engine: scenes, transitions, input, settings, save data — compile with `pdc -I toyboxes/.libpath` — it imports its own modules by project-root path. No global: Noble.lua publishes its own |
 | [pd-options](https://github.com/macvogelsang/pd-options) | `toybox add macvogelsang/pd-options` | Options/settings menu with saved preferences — its Boxfile lua_import says "options.lua" but the file is at source/options.lua, so no import is generated — import it yourself |
 | [pddialogue](https://github.com/playdatesquad/pddialogue) | `toybox add playdatesquad/pddialogue` | Dialogue system |
 | [pdparticles](https://github.com/possiblyaxolotl/pdparticles) | `toybox add possiblyaxolotl/pdparticles` | Particle effects — GitHub repo frozen Aug 2025; development moved to Codeberg |
@@ -288,12 +289,11 @@ the detail for one entry — including how it is imported — with `toybox store
 <name>`.
 
 <details>
-<summary>Checked and <b>not</b> usable as toyboxes (5)</summary>
+<summary>Checked and <b>not</b> usable as toyboxes (4)</summary>
 
 Recorded so the reasoning is not re-derived. See `toybox store info <name>`.
 
 - **[drawdate](https://github.com/neil-morrison44/drawdate)** — a JavaScript project, not a Lua library.
-- **[nobleengine](https://github.com/noblerobot/nobleengine)** — Noble.lua imports its own modules by project-root-relative path ("libraries/noble/modules/..."), which cannot resolve from inside toyboxes/. Needs an upstream change or a vendored copy.
 - **[memory](https://github.com/pictogrammers/memory)** — an icon set, not a Lua library.
 - **[prismatic-engine](https://github.com/sheep42/prismatic-engine)** — resolves to a CMake/C tree with no importable Lua entry.
 - **[jumper](https://github.com/yonaba/jumper)** — ships only examples/ and specs/ on its default branch — no library tree.
@@ -416,12 +416,32 @@ mapped names to URLs and died with the server hosting it, this maps repos to the
 knowledge you would otherwise have to rediscover, and ships inside the tool. Every entry
 is verified by resolving it and compiling a `.pdx`; PRs are welcome on the same terms.
 
-**What this cannot fix.** A library whose *internal* imports are project-root-relative
-still will not work from inside `toyboxes/`. NobleEngine is the example: `Noble.lua` does
-`import "libraries/noble/modules/..."`, which has no meaning from a dependency folder. An
-entry point and a global are not enough; that needs an upstream change or a vendored copy.
-`registry.py` records the cases like this that were checked and rejected, so nobody has to
-work it out twice.
+**Libraries that import their own files by project path.** Some libraries — engines
+especially — are written to be *copied into* your source tree, so their internal imports
+read like `import "libraries/noble/modules/NobleSprite.lua"`. From inside `toyboxes/` that
+cannot resolve, which makes them look impossible to use as a dependency.
+
+They are not. `pdc` takes `-I` search roots, so **toybox.py** builds one: `toybox update`
+creates `toyboxes/.libpath/`, where each such library appears at the path it expects, and
+tells you the flag to use:
+
+```console
+$ toybox add NobleRobot/NobleEngine && toybox update
+Some dependencies import their own files by project path (libraries/noble).
+Compile with:  pdc -I toyboxes/.libpath source <name>.pdx
+```
+
+That is the whole change — no vendoring, no patching, and the library stays a normal
+pinned dependency. NobleEngine builds and runs this way (`Noble`, `NobleScene` and
+`NobleSprite` all live at runtime; verified on the Simulator).
+
+Note it takes an `entry` but **no** `global`: `Noble.lua` publishes `Noble` itself, and a
+capturing import would overwrite that with the file's return value, which is `nil`. That
+is the shadowing trap the `global` field's description warns about — it is easy to hit and
+looks like the library failing to load.
+
+`toystore.py` still records the handful of libraries that were checked and found genuinely
+unusable, with the reason, so nobody works it out twice.
 
 This table folds in every surviving entry of the original **toystore** registry, whose
 final state (crawled 2024-05-15) is preserved verbatim in
