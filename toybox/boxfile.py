@@ -245,7 +245,7 @@ class Boxfile:
             toyboxes = json_content['toyboxes'] = {}
 
         for old_key in old_keys.keys():
-            toyboxes[old_key] = old_keys[key]
+            toyboxes[old_key] = old_keys[old_key]
             json_content.pop(old_key, None)
 
         return True

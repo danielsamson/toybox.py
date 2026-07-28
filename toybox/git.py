@@ -117,9 +117,14 @@ class Git:
 
             for tag in self.listTags():
                 try:
-                    self.tag_versions.append(Version(tag))
-                except ValueError:
-                    pass
+                    version = Version(tag)
+                except (ValueError, SyntaxError):
+                    continue
+
+                # -- A tag that isn't a semver number (e.g. 'latest') parses as a branch
+                # -- version, which has no semver value and would blow up the sort below.
+                if not version.isBranch() and not version.isLocal():
+                    self.tag_versions.append(version)
 
             self.tag_versions = sorted(self.tag_versions)
 

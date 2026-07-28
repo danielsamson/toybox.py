@@ -304,7 +304,7 @@ class Files:
 
         pre_commit_file_path = Paths.preCommitFilePath()
         if os.path.exists(pre_commit_file_path):
-            shutil.move(pre_commit_file_path, Paths.preCommitFilePathBackup())
+            shutil.move(pre_commit_file_path, Paths.preCommitFileBackupPath())
         else:
             with open(Paths.preCommitFileNoBackupPath(), 'w') as out_file:
                 out_file.write('#!/bin/sh\n')

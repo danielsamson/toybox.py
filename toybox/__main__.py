@@ -24,6 +24,8 @@ def main():
         Toybox(sys.argv[1:]).main()
     except ArgumentError as e:
         print(str(e))
+
+        sys.exit(1)
     except Exception as e:
         if _debug_on is True:
             print(traceback.format_exc())
