@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
+import os
 import subprocess
 
 from typing import List
@@ -28,14 +29,18 @@ class Git:
     def git(self, arguments: str, folder: str = None):
         commands = ['git'] + arguments.split()
 
-        url = self.url.replace('https://', 'https://anonymous:@')
-        commands.append(url)
+        commands.append(self.url)
 
         if folder is not None:
             commands.append(folder)
 
+        # -- Never prompt interactively for credentials: fail instead, so resolving a
+        # -- missing or inaccessible repo errors out rather than hanging. Real credentials
+        # -- still flow from git's normal sources (credential helpers, url rewrites, etc.).
+        env = dict(os.environ, GIT_TERMINAL_PROMPT='0')
+
         try:
-            process = subprocess.Popen(commands, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            process = subprocess.Popen(commands, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
             stdout, stderr = process.communicate()
 
             if process.returncode != 0:
