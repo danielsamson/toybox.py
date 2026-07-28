@@ -126,6 +126,25 @@ KNOWN = {
         'entry': 'keyboard-based-menu/Menu', 'global': 'Menu',
     },
 
+    # ── module libraries: no single entry point, by design ───────────────────
+    # These are deliberately a set of independent modules, so there is nothing for
+    # toybox to auto-import — and auto-importing all of them would drag every module
+    # into the .pdx when you wanted two. They are still fully dependency-managed:
+    # pinned, fetched and updated like anything else. `libpath` puts them on pdc's
+    # search path so you can import a module by its short name.
+    'airstruck/knife': {
+        'provides': 'Small independent modules: timers, events, promises, chaining',
+        'libpath': {'knife': 'knife'},
+        'note': 'no auto-import by design — `pdc -I toyboxes/.libpath`, then '
+                'import the modules you want: `local timer = import "knife/timer"`',
+    },
+    'philanc/plc': {
+        'provides': 'Pure-Lua cryptography: ciphers, hashes, AEAD, checksums',
+        'libpath': {'plc': 'plc'},
+        'note': 'no auto-import by design — `pdc -I toyboxes/.libpath`, then '
+                'import what you need: `local sha2 = import "plc/sha2"`',
+    },
+
     # ── general Lua libraries, adapted ───────────────────────────────────────
     # Not written for Playdate, but widely used in Playdate games. Each needs a global
     # or the generated import swallows its return value. Note that the SDK already
@@ -179,10 +198,10 @@ KNOWN = {
     },
 }
 
-# Checked and NOT usable as a single Lua toybox, recorded so nobody re-derives it.
-# Three distinct reasons: not a Lua library at all; nothing importable on the default
-# branch; or a collection of independent modules with no aggregate entry point, which
-# toybox cannot represent because it generates exactly one import per dependency.
+# Checked and NOT usable, recorded so nobody re-derives it. Two reasons only: not a Lua
+# library at all, or nothing importable on the default branch. (A library with no single
+# entry point is NOT in here — see the module-libraries section above; those work fine,
+# they just import per module.)
 REJECTED = {
     'yonaba/jumper': 'ships only examples/ and specs/ on its default branch — no library tree.',
     'neil-morrison44/drawdate': 'a JavaScript project, not a Lua library.',
@@ -191,12 +210,6 @@ REJECTED = {
     'mcdevon/taxman-engine': 'a C engine — no Lua files at all. Not a Lua toybox; a C '
                              'toybox would be a separate piece of work.',
     'nstbayless/mini3d-plus': 'a C extension plus a demo game, not a Lua library.',
-    'airstruck/knife': 'a collection of independent modules (knife/timer, knife/event, ...) '
-                       'with no aggregate entry point. toybox generates ONE import per '
-                       'dependency, so there is nothing single to point at. Add it and '
-                       'import the modules you want directly from toyboxes/.',
-    'philanc/plc': 'pure-Lua crypto, same shape as knife: many independent modules under '
-                   'plc/ with no aggregate entry. Import the ones you want directly.',
 }
 
 ADAPTATION_FIELDS = ('entry', 'global')

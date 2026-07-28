@@ -262,6 +262,7 @@ Known **toyboxes**, verified alive as of July 2026 — PRs adding entries are we
 | [easy-pattern](https://github.com/ebeneliason/easy-pattern) | `toybox add ebeneliason/easy-pattern` | Animated 8x8 patterns with easing — add as `1` if you also use acetate, which pins the 1.x line |
 | [gfxp](https://github.com/ivansergeev/gfxp) | `toybox add ivansergeev/gfxp` | A library of fill patterns, published as the GFXP global — its only tag, v2.0, is not valid semver, so it can only track master |
 | [json.lua](https://github.com/rxi/json.lua) | `toybox add rxi/json.lua` | Lightweight JSON encode/decode — imported as `json`; overlaps the SDK's built-in json |
+| [knife](https://github.com/airstruck/knife) | `toybox add airstruck/knife` | Small independent modules: timers, events, promises, chaining — no auto-import by design — `pdc -I toyboxes/.libpath`, then import the modules you want: `local timer = import "knife/timer"` |
 | [librif](https://github.com/risolvipro/librif) | `toybox add risolvipro/librif` | Grayscale image encoding/reading with RLE compression — **C toybox** |
 | [lua-star](https://github.com/wesleywerner/lua-star) | `toybox add wesleywerner/lua-star` | A* pathfinding, pure Lua — imported as `luastar` |
 | [lume](https://github.com/rxi/lume) | `toybox add rxi/lume` | Utility functions geared towards game development — imported as `lume` |
@@ -276,6 +277,7 @@ Known **toyboxes**, verified alive as of July 2026 — PRs adding entries are we
 | [playdateldtkimporter](https://github.com/nicmagnier/playdateldtkimporter) | `toybox add nicmagnier/playdateldtkimporter` | Import LDtk level-editor tilemaps |
 | [playdatesequence](https://github.com/nicmagnier/playdatesequence) | `toybox add nicmagnier/playdatesequence` | Animation sequences built from easing functions |
 | [playout](https://github.com/potch/playout) | `toybox add potch/playout` | UI layout / box-model library |
+| [plc](https://github.com/philanc/plc) | `toybox add philanc/plc` | Pure-Lua cryptography: ciphers, hashes, AEAD, checksums — no auto-import by design — `pdc -I toyboxes/.libpath`, then import what you need: `local sha2 = import "plc/sha2"` |
 | [pp-lib](https://github.com/robertcurry0216/pp-lib) | `toybox add robertcurry0216/pp-lib` | Platformer building blocks |
 | [robkohr-mono-5x8-font-for-playdate](https://github.com/robkohr/robkohr-mono-5x8-font-for-playdate) | `toybox add robkohr/robkohr-mono-5x8-font-for-playdate` | Readable 5x8 monospaced font |
 | [roomy-playdate](https://github.com/robertcurry0216/roomy-playdate) | `toybox add robertcurry0216/roomy-playdate` | Stack-based scene management |
@@ -289,15 +291,13 @@ the detail for one entry — including how it is imported — with `toybox store
 <name>`.
 
 <details>
-<summary>Checked and <b>not</b> usable as toyboxes (8)</summary>
+<summary>Checked and <b>not</b> usable as toyboxes (6)</summary>
 
 Recorded so the reasoning is not re-derived. See `toybox store info <name>`.
 
-- **[knife](https://github.com/airstruck/knife)** — a collection of independent modules (knife/timer, knife/event, ...) with no aggregate entry point. toybox generates ONE import per dependency, so there is nothing single to point at. Add it and import the modules you want directly from toyboxes/.
 - **[taxman-engine](https://github.com/mcdevon/taxman-engine)** — a C engine — no Lua files at all. Not a Lua toybox; a C toybox would be a separate piece of work.
 - **[drawdate](https://github.com/neil-morrison44/drawdate)** — a JavaScript project, not a Lua library.
 - **[mini3d-plus](https://github.com/nstbayless/mini3d-plus)** — a C extension plus a demo game, not a Lua library.
-- **[plc](https://github.com/philanc/plc)** — pure-Lua crypto, same shape as knife: many independent modules under plc/ with no aggregate entry. Import the ones you want directly.
 - **[memory](https://github.com/pictogrammers/memory)** — an icon set, not a Lua library.
 - **[prismatic-engine](https://github.com/sheep42/prismatic-engine)** — resolves to a CMake/C tree with no importable Lua entry.
 - **[jumper](https://github.com/yonaba/jumper)** — ships only examples/ and specs/ on its default branch — no library tree.
@@ -419,6 +419,19 @@ gets them with no configuration at all. It is the successor to the toystore: whe
 mapped names to URLs and died with the server hosting it, this maps repos to the packaging
 knowledge you would otherwise have to rediscover, and ships inside the tool. Every entry
 is verified by resolving it and compiling a `.pdx`; PRs are welcome on the same terms.
+
+**Libraries with no single entry point.** Some are deliberately a set of independent
+modules — `knife/timer`, `knife/event`, `plc/sha2`. There is nothing for **toybox.py** to
+auto-import, and importing all of them would drag every module into your `.pdx` when you
+wanted two. They are still fully dependency-managed — pinned, fetched and updated like
+anything else — you just import the parts you use:
+
+```lua
+local timer = import "knife/timer"
+local sha2  = import "plc/sha2"
+```
+
+Those short paths work because of the same search root described next.
 
 **Libraries that import their own files by project path.** Some libraries — engines
 especially — are written to be *copied into* your source tree, so their internal imports
