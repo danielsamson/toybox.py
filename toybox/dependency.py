@@ -157,7 +157,8 @@ class Dependency:
             raise DependencyError('Can\'t resolve version with \'' + self.originalVersions() + '\' for \'' + self.url.as_string + '\'.')
 
         if self.last_version_installed is not None and self.last_version_installed.original_version == version_resolved.original_version:
-            return
+            # -- None by contract: callers treat it as 'already installed, nothing done'.
+            return None
 
         folder = self.toyboxFolder()
         self.deleteToyboxFolder()

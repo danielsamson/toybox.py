@@ -4,6 +4,7 @@
 
 import json
 import os
+import tempfile
 
 from typing import List
 from typing import Dict
@@ -208,10 +209,20 @@ class Boxfile:
             for url in urls_to_remove:
                 self.json_installed.pop(url, None)
 
-        out_file = open(self.boxfile_path, 'w')
-        json.dump(self.json_content, out_file, indent=4)
+        # -- Write to a temp file and rename it into place, so a crash mid-write can
+        # -- never leave a corrupt Boxfile behind.
+        folder = os.path.dirname(self.boxfile_path) or '.'
+        handle, temp_path = tempfile.mkstemp(prefix='Boxfile.', dir=folder)
+        try:
+            with os.fdopen(handle, 'w') as out_file:
+                json.dump(self.json_content, out_file, indent=4)
 
-        out_file.close()
+            os.replace(temp_path, self.boxfile_path)
+        except BaseException:
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
+
+            raise
 
     def dependencies(self) -> List[Dependency]:
         deps: List[Dependency] = []

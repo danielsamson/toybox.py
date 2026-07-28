@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
+import json
 import os
 import pytest
 import stat
@@ -12,6 +13,7 @@ from toybox.files import Files
 from toybox.git import Git
 from toybox.url import Url
 from toybox.utils import Utils
+from toybox.version import Version
 from toybox.__main__ import main
 
 
@@ -79,6 +81,60 @@ def test_url_equality_against_other_types():
     assert (url == 'someuser/somerepo') is False
     assert url != 42
     assert url == Url('github.com/someuser/somerepo')
+
+
+@pytest.mark.parametrize('version_string, expected', [
+    ('1', ['>=1.0.0', '<2.0.0']),
+    ('1.2', ['>=1.2.0', '<1.3.0']),
+    ('v1.2', ['>=1.2.0', '<1.3.0']),      # -- leading 'v' used to defeat range expansion
+    ('1.2.3', ['1.2.3']),
+    ('>1.2', ['>1.2.0']),
+    ('develop', ['develop']),
+])
+def test_incomplete_version_range_expansion(version_string, expected):
+    assert Version.maybeRangeFromIncompleteNumericVersion(version_string) == expected
+
+
+@pytest.mark.parametrize('version_string', ['>', '>=', '<'])
+def test_bare_operator_raises_instead_of_index_error(version_string):
+    with pytest.raises(SyntaxError):
+        Version.maybeRangeFromIncompleteNumericVersion(version_string)
+
+
+def test_list_refs_parses_sha256_repos(monkeypatch):
+    # -- Ref parsing used to take the first 40 characters as the hash; SHA-256 repos
+    # -- have 64-character hashes and would have been silently mis-parsed.
+    sha256_hash = 'a' * 64
+    sha1_hash = 'b' * 40
+    canned = (sha256_hash + '\trefs/heads/main\n' + sha1_hash + '\trefs/tags/1.0.0\n')
+
+    git = Git(Url('someuser/somerepo'))
+    monkeypatch.setattr(git, 'git', lambda arguments, folder=None: canned)
+
+    assert git.listBranches() == {'main': sha256_hash}
+    assert git.listTags() == ['1.0.0']
+    assert git.getLatestCommitHashForBranch('main') == sha256_hash
+
+
+def test_boxfile_save_failure_leaves_the_original_intact(tmp_path, monkeypatch):
+    # -- Saves go through a temp file + rename; a failure mid-write must leave the
+    # -- existing Boxfile untouched and clean up after itself.
+    original = {'toyboxes': {'a/b': '1.0'}}
+    (tmp_path / 'Boxfile').write_text(json.dumps(original))
+
+    box_file = Boxfile(str(tmp_path))
+    box_file.addDependencyWithURLAt(Url('c/d'), '2.0')
+
+    def explode(*args, **kwargs):
+        raise RuntimeError('disk full')
+
+    monkeypatch.setattr(json, 'dump', explode)
+
+    with pytest.raises(RuntimeError):
+        box_file.saveIfModified()
+
+    assert json.loads((tmp_path / 'Boxfile').read_text()) == original
+    assert [p.name for p in tmp_path.iterdir()] == ['Boxfile']
 
 
 def test_argument_error_exits_nonzero(monkeypatch, capsys):

@@ -83,10 +83,17 @@ class Git:
     def listRefs(self) -> Dict[str, str]:
         if self.refs is None:
             self.refs = {}
-            for ref in self.git('ls-remote --refs').split('\n'):
-                refs_index = ref.find('refs/')
+            # -- ls-remote output is '<hash>\t<refname>' per line. Split on the tab
+            # -- rather than assuming a 40-character hash, so SHA-256 repos parse too.
+            for line in self.git('ls-remote --refs').split('\n'):
+                parts = line.split('\t')
+                if len(parts) != 2:
+                    continue
+
+                commit_hash, ref_name = parts
+                refs_index = ref_name.find('refs/')
                 if refs_index >= 0:
-                    self.refs[ref[refs_index + 5:]] = ref[:40]
+                    self.refs[ref_name[refs_index + 5:]] = commit_hash
 
         return self.refs
 

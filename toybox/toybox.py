@@ -466,7 +466,9 @@ class Toybox:
 
             self.box_file.saveIfModified()
 
-        except Exception:
+        except BaseException:
+            # -- BaseException so a Ctrl-C mid-update also restores the previous
+            # -- install instead of leaving the project half-updated.
             Toybox.restoreAssetsBackup()
             Toybox.restoreToyboxesBackup()
             raise

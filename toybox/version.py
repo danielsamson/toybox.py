@@ -178,44 +178,54 @@ class Version:
 
     @classmethod
     def maybeRangeFromIncompleteNumericVersion(cls, version: str) -> str:
-        versions = []
+        operator = ''
+        rest = version
 
-        first_character = version[0]
-        if first_character == '>' or first_character == '<':
-            first_character = version[1]
+        if rest[0] == '>' or rest[0] == '<':
+            if len(rest) > 1 and rest[1] == '=':
+                operator = rest[:2]
+                rest = rest[2:]
+            else:
+                operator = rest[:1]
+                rest = rest[1:]
 
-            if first_character == '=':
-                first_character = version[2]
+            if len(rest) == 0:
+                raise SyntaxError('Malformed version \'' + version + '\' (nothing after the operator).')
 
-        if (first_character < '0' or first_character > '9'):
+        # -- Tags commonly carry a leading 'v'; treat 'v1.2' exactly like '1.2'.
+        if rest[0] == 'v' and len(rest) > 1 and rest[1] in string.digits:
+            rest = rest[1:]
+
+        if rest[0] not in string.digits:
             return [version]
 
-        components = version.split('.')
+        components = rest.split('.')
         nb_of_components = len(components)
         if nb_of_components > 3:
             raise SyntaxError('Malformed version \'' + version + '\' (too many components).')
 
-        nb_of_components_added = 0
+        # -- If we're missing any minor or patch numbers, we set them as 0.
+        nb_of_components_added = 3 - nb_of_components
+        rest += '.0' * nb_of_components_added
 
-        for i in range(nb_of_components, 3):
-            # -- If we're missing any minor or patch numbers, we set them as 0.
-            version += '.0'
-            nb_of_components_added += 1
+        if operator != '':
+            # -- An explicit comparison is already a range; just complete the number
+            # -- (constructing the Version validates it).
+            completed = operator + rest
+            Version(completed)
+            return [completed]
 
-        if version.startswith('>') or version.startswith('<'):
-            nb_of_components_added = 0
+        if nb_of_components_added == 0:
+            Version(rest)
+            return [rest]
 
-        if nb_of_components_added != 0:
-            version = '>=' + version
-
-        new_version = Version(version)
-        versions.append(version)
+        # -- A partial number like '1' or '1.2' means 'any version with this prefix'.
+        new_version = Version('>=' + rest)
+        versions = ['>=' + rest]
 
         if nb_of_components_added == 1:
-            top_bracket = new_version.asSemVer.bump_minor()
-            versions.append('<' + str(top_bracket))
-        elif nb_of_components_added == 2:
-            top_bracket = new_version.asSemVer.bump_major()
-            versions.append('<' + str(top_bracket))
+            versions.append('<' + str(new_version.asSemVer.bump_minor()))
+        else:
+            versions.append('<' + str(new_version.asSemVer.bump_major()))
 
         return versions
