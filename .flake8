@@ -1,4 +1,7 @@
 [flake8]
-ignore =
+# -- extend-ignore, not ignore: 'ignore' silently REPLACES flake8's default ignore
+# -- list (which includes W503/W504 and the E24x alignment codes), so deliberate
+# -- table alignment or operator-first line breaks would fail the build.
+extend-ignore =
     # -- We don't want to limit lines lengths
     E501
