@@ -19,7 +19,6 @@ from .paths import Paths
 from .utils import Utils
 from .files import Files
 from .url import Url
-from .toystore import ToyStore
 
 
 class Toybox:
@@ -147,7 +146,7 @@ class Toybox:
         print('   remove <name/url>        - Remove a dependency.')
         print('   update <name/url>        - Update a dependency or all dependencies if no argument is provided.')
         print('   check                    - Check for updated toyboxes.')
-        print('   store <subcommand>       - Get info about the toystore (use \'help store\' for more info).')
+        print('   store <subcommand>       - Retired: the toystore went away with the original project.')
         print('   set <name> <value>       - Set a configuration value for this toybox.')
         print('   setupMakefile            - Setup a basic makefile project for using C toyboxes.')
         print('')
@@ -505,7 +504,7 @@ class Toybox:
         print('OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE')
         print('SOFTWARE.')
         print('')
-        print('Official repo can be found at https://code.malenfant.net/didier/toybox.py')
+        print('Official repo can be found at https://github.com/danielsamson/toybox.py')
         print('')
 
     @classmethod
@@ -524,9 +523,9 @@ class Toybox:
         Toybox.printVersion()
         print('')
         print('Usage:')
-        print('   toybox store content     - List all the toyboxes found in the toystore.')
-        print('   toybox store info <name> - Get some info about a given toybox.')
-        print('   toybox store repo <name> - Open a browser showing the repo of a given toybox.')
+        print('   The toystore was hosted by the original author and went away when the')
+        print('   project was discontinued, so the store subcommands are retired.')
+        print('   Add toyboxes by their repo instead:  toybox add <username>/<repo>')
         print('')
 
     @classmethod
@@ -541,33 +540,21 @@ class Toybox:
 
     @classmethod
     def storeContent(cls, argument, force_update=False):
-        ToyStore(force_update).content()
+        raise RuntimeError('The toystore is gone: it was hosted by the original author and was deleted when the project was discontinued. Add toyboxes by their repo instead: toybox add <username>/<repo>.')
 
     @classmethod
     def storeInfo(cls, argument, force_update=False):
-        if argument is None:
-            raise ArgumentError('Missing argument for store info command.')
-
-        ToyStore(force_update).info(argument)
+        Toybox.storeContent(argument, force_update)
 
     @classmethod
     def storeRepo(cls, argument, force_update=False):
-        if argument is None:
-            raise ArgumentError('Missing argument for store repo command.')
-
-        ToyStore(force_update).repo(argument)
+        Toybox.storeContent(argument, force_update)
 
     @classmethod
     def urlFromArgument(cls, argument, force_update=False):
         if argument.__contains__('/') is False:
-            # -- The argument passed looks like a toybox name, let's try to resolve it.
-            toystore: ToyStore = ToyStore(force_update)
-
-            url: str = toystore.maybeUrlForName(argument)
-            if url is None:
-                raise RuntimeError('Could find any toybox named ' + argument + ' in the toystore.')
-
-            return Url(url)
+            # -- Bare names used to be resolved via the toystore, which is gone.
+            raise RuntimeError('Cannot look up \'' + argument + '\' by name: the toystore went away with the original project. Use the full repo form instead: toybox add <username>/' + argument + '.')
 
         return Url(argument)
 
@@ -637,7 +624,7 @@ class Toybox:
                                                            time_in_seconds=(24 * 60 * 60)):
                 return
 
-            latest_version = Git(Url('code.malenfant.net/didier/toybox.py')).getLatestVersion()
+            latest_version = Git(Url('github.com/danielsamson/toybox.py')).getLatestVersion()
             if latest_version is None:
                 return
 
@@ -645,6 +632,6 @@ class Toybox:
 
             if latest_version > Version(__version__):
                 print('‼️  Version v' + str(latest_version) + ' is available for toybox.py. You have v' + __version__ + ' ‼️')
-                print('Please run \'pip install toyboxpy --upgrade\' to upgrade.')
+                print('Please run \'pip install --upgrade git+https://github.com/danielsamson/toybox.py\' to upgrade.')
         except Exception:
             pass

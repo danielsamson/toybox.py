@@ -1,14 +1,22 @@
 # toybox.py
 
-[![MIT License](https://img.shields.io/badge/license-MIT-orange)](https://spdx.org/licenses/MIT.html) [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/toyboxpy.svg)](https://python.org) [![PyPI - Version](https://img.shields.io/pypi/v/toyboxpy.svg)](https://pypi.org/project/toyboxpy)
+[![MIT License](https://img.shields.io/badge/license-MIT-orange)](https://spdx.org/licenses/MIT.html)
 
 A **Lua**, **C** and asset dependency manager for the [**Playdate**](https://play.date) **SDK**.
+
+> **This is a community continuation.** The original **toybox.py** by
+> [Didier Malenfant](https://pypi.org/project/toyboxpy/) was discontinued in 2025 and its
+> repositories deleted; only the PyPI package and a
+> [Software Heritage snapshot](https://archive.softwareheritage.org/browse/origin/directory/?origin_url=https://codeberg.org/DidierMalenfant/toybox.py.git)
+> remained. This repo continues the project from those two sources under the same MIT
+> license — see the first two commits for full provenance. The original commit history
+> could not be recovered. The **toystore** (the author-hosted name registry) is gone, so
+> the `store` command is retired and toyboxes are added by `<username>/<repo>`; everything
+> else works as it always did.
 
 **toybox.py** is a Python port of [Jeremy McAnally](https://github.com/jm)'s toybox app. **toybox.py** lets you easily use, create and share third party libraries, called **toyboxes**, for any **Playdate** project. It handles all dependencies between **toyboxes** automatically and provides precise versioning for each **toybox**.
 
 Some **toyboxes** may provide **C** code, some may provide **Lua** code or **Lua** extensions written in **C** and some may provide just assets. Some **toyboxes** may provide all three or only two of these, it's completely up to the **toybox** creator and maintainer.
-
-The main repo for the project is on my [**code repo**](https://code.malenfant.net/didier/toybox.py).
 
 Playdate is a registered trademark of [**Panic**](https://panic.com).
 
@@ -25,13 +33,17 @@ Playdate is a registered trademark of [**Panic**](https://panic.com).
 
 ### Installation
 
-**toybox.py** is a pure Python project. It requires at least [Python](https://python.org) 3.7 and access to the [git](https://git-scm.com) command line tool. Make sure you have a [supported version](http://didier.malenfant.net/blog/nerdy/2022/08/17/installing-python.html) of **Python** before proceeding.
+**toybox.py** is a pure Python project. It requires at least [Python](https://python.org) 3.7 and access to the [git](https://git-scm.com) command line tool.
 
 You can install **toybox.py** by typing the following in a terminal window:
 
 ```console
-pip install toyboxpy
+pip install git+https://github.com/danielsamson/toybox.py
 ```
+
+(The original author's final release is still on PyPI as
+[toyboxpy](https://pypi.org/project/toyboxpy/) 1.4.0, but it is unmaintained and points
+at servers that no longer exist — prefer this repo.)
 
 ### Usage
 
@@ -52,7 +64,7 @@ add <name/url> <version> - Add a new dependency (version is optional).
 remove <name/url>        - Remove a dependency.
 update <name/url>        - Update a dependency or all dependencies if no argument is provided.
 check                    - Check for updated toyboxes.
-store <subcommand>       - Get info about the toystore (use \'help store\' for more info).
+store <subcommand>       - Retired: the toystore went away with the original project.
 set <name> <value>       - Set a configuration value for this toybox.
 setupMakefile            - Setup a basic makefile project for using C toyboxes.
 ```
@@ -78,14 +90,15 @@ The `add` command takes up to two arguments:
 toybox add <name/url> <version>
 ```
 
-The first argument should either be name of a toybox, if it is listed in the **toystore**, the full url to a **git** repository which contains the **toybox** you would like to add, such as `https://code.malenfant.net/didier/modplayer.git`. For example, because `modplayer is on the **toystore**, any of the short forms below will point to the same repository:
+The first argument is the **git** repository which contains the **toybox** you would like to add, as a full url or a `username/repo` shorthand. All of the forms below point to the same repository:
 
 ``` console
-toybox add easy-pattern
 toybox add https://github.com/ebeneliason/easy-pattern
 toybox add github.com/ebeneliason/easy-pattern
 toybox add ebeneliason/easy-pattern
 ```
+
+(Bare names like `toybox add easy-pattern` used to be resolved through the **toystore**, an author-hosted registry that went away with the original project — use the `username/repo` form instead.)
 
 **toyboxes** do not need to be hosted on [Github](https://github.com) but, as shown above, if the server url is omitted then Github is assumed.
 
@@ -220,32 +233,18 @@ std = "lua54+playdate+toyboxes"
 operators = {"+=", "-=", "*=", "/="}
 ```
 
-Make sure to always run `luacheck` from the root folder of your project in order for these definitions to work correctly. For the time being, compound operators support is not part of the main branch of Luacheck. You can experiment with it by installing this [forked branch](https://code.malenfant.net/didier/luacheck/tree/compound-operators) of Luacheck.
+Make sure to always run `luacheck` from the root folder of your project in order for these definitions to work correctly. (The original author's Luacheck fork with compound-operator support went away with the rest of his repos.)
 
-### The toystore
+### The toystore (retired)
 
-The **toystore** is an online registry of known **toyboxes** and their `url` so that they can be referred to by only their names. It is located on [Github](https://code.malenfant.net/didier/toystore) and new **toyboxes** can be added to it by simply submitting a PR. This is purely for convenience though and there is no obligation that a **toybox** be added to the **toystore** for it to be freely available to anyone since you can always use its `url` directly.
-
-To see a list of all available **toyboxes** in the **toystore** you can use the `store content` command:
-
-```console
-toybox store content
-```
-
-You can also get more information about a given toybox or open a browser to see the repo for a toybox with the `store info` and `store repo` commands:
-
-```console
-toybox store info pdbase
-```
-
-Information from the **toystore** is cached locally on your computer. You can use the `-f` option to force re-downloading this information.
+The **toystore** was an online registry of known **toyboxes** so that they could be referred to by only their names. It was hosted by the original author and was deleted when the project was discontinued, so the `store` subcommands are retired and bare names can no longer be resolved — refer to **toyboxes** by their `username/repo` form or full url instead.
 
 ### Adding the toybox powered badge
 
-If your projects use **toyboxes**, you can let others know that they are [![Toybox Powered](https://img.shields.io/badge/toybox.py-powered-orange)](https://code.malenfant.net/didier/toybox.py) by adding this badge to your `README.md` file:
+If your projects use **toyboxes**, you can let others know that they are [![Toybox Powered](https://img.shields.io/badge/toybox.py-powered-orange)](https://github.com/danielsamson/toybox.py) by adding this badge to your `README.md` file:
 
 ```
-[![Toybox Powered](https://img.shields.io/badge/toybox.py-powered-orange)](https://code.malenfant.net/didier/toybox.py)
+[![Toybox Powered](https://img.shields.io/badge/toybox.py-powered-orange)](https://github.com/danielsamson/toybox.py)
 ```
 
 ### Creating your own toyboxes
@@ -388,7 +387,7 @@ function MyPdPi.getMyPic()
     return playdate.graphics.image.new(`toybox_assets/github.com/MyUsername/MyRepo/images/MyPic`)
 end
 ```
-That way they do not have to deal with the path to your asset. Check out the [FontSample](https://code.malenfant.net/didier/FontSample) sample **toybox** for an examples of how to do this.
+That way they do not have to deal with the path to your asset.
 
 You can override the subfolder used for your **toybox**'s assets by using the `set assets_sub_folder` command:
 
@@ -438,20 +437,6 @@ std = "lua54+playdate+MyPdPi"
 operators = {"+=", "-=", "*=", "/="}
 ```
 
-#### Adding your toybox to the toystore
-
-If you want to make it easy for others to use your **toybox**, you can submit a PR to the **[toystore](https://code.malenfant.net/didier/toystore)** in order for them to be able to refer to your **toybox** simply by its name. Entries in the toystore are located in the file `toystore.toml` and are be in the following format:
-
-```toml
-[Plupdate]
-url = "https://code.malenfant.net/didier/Plupdate"
-description = "The playdate.update() manager."
-author = "Didier Malenfant <coding@malenfant.net>"
-license = "MIT"
-```
-
-Make sure that your entry is added in alphabetical order in the file and that the name you decided to use is unique, not too generic and descriptive.
-
 #### Letting others know about your toybox
 
 It's not required, but it's always a good idea, to add a word about **toybox.py** in the README.md of your **toybox** repo so developers know what it contains and how to use it:
@@ -459,20 +444,18 @@ It's not required, but it's always a good idea, to add a word about **toybox.py*
 ```console
 **MyPdPi** is a [**Playdate**](https://play.date) **toybox** which lets you calculate Pi to an infinite number of decimals.
 
-You can add it to your **Playdate** project by installing [**toybox.py**](https://code.malenfant.net/didier/toybox.py), going to your project folder in a Terminal window and typing:
+You can add it to your **Playdate** project by installing [**toybox.py**](https://github.com/danielsamson/toybox.py), going to your project folder in a Terminal window and typing:
 
     toybox add MyGitHubUsername/MyPdPi
     toybox update
 
 This **toybox** contains both **Lua** and **C** toys for you to play with.
 ```
-You can also add a nice [![Toybox Compatible](https://img.shields.io/badge/toybox.py-compatible-brightgreen)](https://code.malenfant.net/didier/toybox.py) badge like this:
+You can also add a nice [![Toybox Compatible](https://img.shields.io/badge/toybox.py-compatible-brightgreen)](https://github.com/danielsamson/toybox.py) badge like this:
 
 ```
-[![Toybox Compatible](https://img.shields.io/badge/toybox.py-compatible-brightgreen)](https://code.malenfant.net/didier/toybox.py)
+[![Toybox Compatible](https://img.shields.io/badge/toybox.py-compatible-brightgreen)](https://github.com/danielsamson/toybox.py)
 ```
-
-Don't forget to also let us know about your **toyboxes** via social media (`#toyboxpy`, mentions or DM) so that we can spread the word too...
 
 ### License
 
