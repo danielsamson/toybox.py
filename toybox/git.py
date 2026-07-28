@@ -4,6 +4,7 @@
 
 import os
 import subprocess
+import time
 
 from typing import List
 from typing import Dict
@@ -18,6 +19,18 @@ class Git:
     # -- Generous ceiling so a network stall fails instead of hanging forever, while a
     # -- slow clone of a big dependency still has plenty of room.
     command_timeout_in_seconds = 300
+
+    # -- Failures whose stderr matches one of these get ONE retry after a short pause;
+    # -- everything else (bad credentials, missing repo, ...) fails immediately.
+    transient_error_markers = ('could not resolve host',
+                               'unable to access',
+                               'timed out',
+                               'connection reset',
+                               'connection refused',
+                               'early eof',
+                               'rpc failed')
+
+    retry_delay_in_seconds = 2
 
     def __init__(self, url: Url):
         """Setup access to the git repo at url."""
@@ -43,6 +56,34 @@ class Git:
         # -- still flow from git's normal sources (credential helpers, url rewrites, etc.).
         env = dict(os.environ, GIT_TERMINAL_PROMPT='0')
 
+        for attempt in range(2):
+            returncode, stdout, stderr = self._runGitCommand(commands, env)
+
+            if returncode == 0:
+                return stdout
+
+            if stdout.startswith('usage: git'):
+                # -- git is giving us the usage info back it seems.
+                raise SyntaxError('Invalid git command line')
+
+            if stderr.startswith('fatal: not a git repository (or any of the parent directories): .git'):
+                raise RuntimeError('Error: Your project folder needs to be a git repo for certain commands to work correctly. Try `git init` to create one.')
+
+            # -- Or maybe something else went wrong.
+            error = stderr.split('\n')[0]
+
+            if error == 'remote: Invalid username or password.':
+                raise RuntimeError('Cannot access git repo at \'' + self.url + '\'. Maybe it is private?')
+
+            if attempt == 0 and any(marker in stderr.lower() for marker in Git.transient_error_markers):
+                # -- Looks like a transient network problem: give it one more try.
+                time.sleep(Git.retry_delay_in_seconds)
+                continue
+
+            raise RuntimeError('Error running git against \'' + self.url + '\': ' + error)
+
+    def _runGitCommand(self, commands, env):
+        """One attempt; returns (returncode, decoded stdout, decoded stderr)."""
         try:
             process = subprocess.Popen(commands, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
 
@@ -51,32 +92,11 @@ class Git:
             except subprocess.TimeoutExpired:
                 process.kill()
                 process.communicate()
-                raise RuntimeError('Timed out running git against \'' + self.url + '\'.')
+                return (-1, '', 'timed out after ' + str(Git.command_timeout_in_seconds) + 's')
 
-            stdout = stdout.decode('utf-8', errors='replace')
-            stderr = stderr.decode('utf-8', errors='replace')
-
-            if process.returncode != 0:
-                if stdout.startswith('usage: git'):
-                    # -- git is giving us the usage info back it seems.
-                    raise SyntaxError('Invalid git command line')
-                else:
-                    if stderr.startswith('fatal: not a git repository (or any of the parent directories): .git'):
-                        raise RuntimeError('Error: Your project folder needs to be a git repo for certain commands to work correctly. Try `git init` to create one.')
-
-                    # -- Or maybe something else went wrong.
-                    error = stderr.split('\n')[0]
-
-                    if error == 'remote: Invalid username or password.':
-                        raise RuntimeError('Cannot access git repo at \'' + self.url + '\'. Maybe it is private?')
-                    else:
-                        raise RuntimeError('Error running git: ' + error)
-
-            return stdout
-        except RuntimeError:
-            raise
-        except SyntaxError:
-            raise
+            return (process.returncode,
+                    stdout.decode('utf-8', errors='replace'),
+                    stderr.decode('utf-8', errors='replace'))
         except Exception as e:
             raise RuntimeError('Error running git: ' + str(e))
 
