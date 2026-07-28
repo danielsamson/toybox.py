@@ -255,6 +255,7 @@ Known **toyboxes**, verified alive as of July 2026 — PRs adding entries are we
 | [acetate](https://github.com/ebeneliason/acetate) | `toybox add ebeneliason/acetate` | Visual sprite-debugging overlay for the Simulator (Lua) — see note 1 |
 | [AnimatedSprite](https://github.com/Whitebrim/AnimatedSprite) | `toybox add Whitebrim/AnimatedSprite` | Sprite class with imagetable animation and a finite state machine (Lua) |
 | [easy-pattern](https://github.com/ebeneliason/easy-pattern) | `toybox add ebeneliason/easy-pattern` | Animated 8×8 patterns with easing (Lua) — see note 1 |
+| [GFXP](https://github.com/ivansergeev/gfxp) | `toybox add ivansergeev/gfxp` | A library of fill patterns, published as the `GFXP` global (Lua) — see note 3 |
 | [LDtkImporter](https://github.com/NicMagnier/PlaydateLDtkImporter) | `toybox add NicMagnier/PlaydateLDtkImporter` | Import LDtk level-editor tilemaps (Lua) |
 | [librif](https://github.com/risolvipro/librif) | `toybox add risolvipro/librif` | Grayscale image encoding/reading with RLE compression (C and Lua) |
 | [pd-options](https://github.com/macvogelsang/pd-options) | `toybox add macvogelsang/pd-options` | Options/settings menu with saved preferences (Lua) — see note 2 |
@@ -299,6 +300,29 @@ resolves relative to the importing file, so from `source/main.lua` that is:
 import '../toyboxes/toyboxes.lua'
 import '../toyboxes/github-dot-com/macvogelsang/pd-options/source/options.lua'
 ```
+
+**Note 3 — `GFXP` can only track `master` for now.** Its sole tag is `v2.0`, which is not
+valid [semver](https://semver.org) (three components are required), so it cannot be
+resolved as a version — `toybox add ivansergeev/gfxp 2` fails with
+`Can't resolve version with '>=2.0.0 <3.0.0'`. A bare add correctly falls back to the
+`master` branch and works; a `v2.0.0` tag upstream would make it pinnable.
+
+### A note for toybox authors
+
+Playdate's `import` is not Lua's `require`: **it ignores return values**. So a library
+written in the usual `local M = {} … return M` style produces *nothing* when a game
+imports it, even though **toybox.py** installs and imports the file correctly. A toybox
+must publish a global instead:
+
+```lua
+GFXP = {}          -- reachable after import
+-- return M        -- silently useless under Playdate's import
+```
+
+This is why many otherwise-excellent Lua libraries listed in
+[awesome-playdate](https://github.com/sayhiben/awesome-playdate) are not in the table
+above: they are perfectly good code, but cannot be consumed as **toyboxes** without a
+wrapper that assigns a global.
 
 This table folds in every surviving entry of the original **toystore** registry, whose
 final state (crawled 2024-05-15) is preserved verbatim in
