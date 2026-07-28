@@ -25,3 +25,8 @@ jobs:
         run: flake8 toybox tests
       - name: Tests
         run: pytest tests/ -q
+
+      # The README's toybox table is generated from toybox/toystore.py. Guarding it here
+      # is the point of generating it: the docs and the index cannot drift apart.
+      - name: README store table is in sync
+        run: python3 tools/gen_store_table.py --check

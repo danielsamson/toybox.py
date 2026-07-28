@@ -10,7 +10,7 @@ from typing import List
 from pathlib import Path
 
 from .boxfile import Boxfile
-from .registry import adaptationFor
+from .toystore import adaptationFor
 from .dependency import Dependency
 from .paths import Paths
 from .utils import Utils
@@ -95,7 +95,7 @@ class Files:
 
         # -- The consuming project can say how to consume a dependency that does not
         # -- package itself; it overrides the bundled adaptation registry. See
-        # -- registry.py for why an adaptation is needed at all.
+        # -- toystore.py for why an adaptation is needed at all.
         overrides = Boxfile(Paths.boxfileFolder(), empty_if_does_not_exist=True).maybeImportOverrides()
 
         for dep in dependencies:
@@ -115,8 +115,7 @@ class Files:
                 if len(Utils.lookInFolderFor(dep_folder, entry + '.lua')) != 0:
                     maybe_lua_include_path = entry
                 else:
-                    print('Warning: adaptation for \'' + dep.url.repo_name + '\' points at \''
-                          + entry + '.lua\', which is not in this version. Ignoring it.')
+                    print('Warning: adaptation for \'' + dep.url.repo_name + '\' points at \'' + entry + '.lua\', which is not in this version. Ignoring it.')
 
             lua_include_path = Files.findLuaIncludeFileIn(dep_folder, dep.url.repo_name, maybe_lua_include_path)
 
@@ -140,7 +139,7 @@ class Files:
                 # -- Playdate's import RETURNS the file's value but runs each file only
                 # -- once, so this generated line is the first import and the only place
                 # -- the value can still be caught. Binding it here is what makes an
-                # -- ordinary `return M` Lua library usable at all. See registry.py.
+                # -- ordinary `return M` Lua library usable at all. See toystore.py.
                 if lua_global:
                     statement = lua_global + ' = ' + statement
 

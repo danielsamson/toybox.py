@@ -16,6 +16,8 @@ from .version import Version
 from .dependency import Dependency
 from .git import Git
 from .paths import Paths
+from . import toystore as ToyStore
+from .toystore import KNOWN
 from .utils import Utils
 from .files import Files
 from .url import Url
@@ -147,7 +149,7 @@ class Toybox:
         print('   remove <name/url>        - Remove a dependency.')
         print('   update <name/url>        - Update a dependency or all dependencies if no argument is provided.')
         print('   check                    - Check for updated toyboxes.')
-        print('   store <subcommand>       - Retired: the toystore went away with the original project.')
+        print('   store <subcommand>       - Browse the toyboxes this version knows about.')
         print('   set <name> <value>       - Set a configuration value for this toybox.')
         print('   setupMakefile            - Setup a basic makefile project for using C toyboxes.')
         print('')
@@ -542,9 +544,15 @@ class Toybox:
         Toybox.printVersion()
         print('')
         print('Usage:')
-        print('   The toystore was hosted by the original author and went away when the')
-        print('   project was discontinued, so the store subcommands are retired.')
-        print('   Add toyboxes by their repo instead:  toybox add <username>/<repo>')
+        print('   toybox store content     - List the toyboxes known to this version.')
+        print('   toybox store info <name> - Details for one, including how to import it.')
+        print('   toybox store repo <name> - Print its repository url.')
+        print('')
+        print('   The original toystore was an online registry hosted by the original')
+        print('   author and went away with him. This one is local data shipped in the')
+        print('   tool (toybox/toystore.py), so it cannot go offline — and a correction')
+        print('   is a pull request. It is a curated index, not an exhaustive one; any')
+        print('   git repo still works with  toybox add <username>/<repo>.')
         print('')
 
     @classmethod
@@ -559,15 +567,79 @@ class Toybox:
 
     @classmethod
     def storeContent(cls, argument, force_update=False):
-        raise RuntimeError('The toystore is gone: it was hosted by the original author and was deleted when the project was discontinued. Add toyboxes by their repo instead: toybox add <username>/<repo>.')
+        print('Toyboxes known to toybox.py v' + __version__ + ':')
+        print('')
+
+        for key in sorted(KNOWN):
+            entry = KNOWN[key]
+            marks = []
+            if entry.get('kind') == 'c':
+                marks.append('C')
+            if entry.get('global') or entry.get('entry'):
+                marks.append('adapted')
+            if entry.get('note'):
+                marks.append('note')
+            suffix = ('  [' + ', '.join(marks) + ']') if marks else ''
+            print('   ' + key.ljust(44) + entry.get('provides', '') + suffix)
+
+        print('')
+        print('   ' + str(len(KNOWN)) + ' entries. \'toybox store info <name>\' for details.')
+        print('   Curated, not exhaustive: any git repo works with \'toybox add <username>/<repo>\'.')
 
     @classmethod
     def storeInfo(cls, argument, force_update=False):
-        Toybox.storeContent(argument, force_update)
+        if argument is None:
+            raise ArgumentError('Missing argument for store info command.')
+
+        key, entry = ToyStore.find(argument)
+        if key is None:
+            Toybox.printStoreMiss(argument, entry)
+            return
+
+        print(key)
+        print('   ' + entry.get('provides', ''))
+        print('')
+        print('   add with:  toybox add ' + key)
+        print('   repo:      https://github.com/' + key)
+        if entry.get('kind') == 'c':
+            print('   kind:      C toybox — needs a Makefile (see \'toybox setupMakefile\')')
+        if entry.get('entry'):
+            print('   entry:     ' + entry['entry'] + '.lua  (toybox cannot discover this by itself)')
+        if entry.get('global'):
+            print('   global:    ' + entry['global'] + '  — the generated import binds the value to this,')
+            print('              because Playdate\'s import would otherwise discard it')
+        if entry.get('note'):
+            print('   note:      ' + entry['note'])
 
     @classmethod
     def storeRepo(cls, argument, force_update=False):
-        Toybox.storeContent(argument, force_update)
+        if argument is None:
+            raise ArgumentError('Missing argument for store repo command.')
+
+        key, entry = ToyStore.find(argument)
+        if key is None:
+            Toybox.printStoreMiss(argument, entry)
+            return
+
+        print('https://github.com/' + key)
+
+    @classmethod
+    def printStoreMiss(cls, argument, matches):
+        # -- A near miss is the common case (a bare name, or a typo), so say what WOULD
+        # -- have matched instead of only that nothing did.
+        if matches:
+            print('No exact match for \'' + argument + '\'. Did you mean:')
+            for match in matches:
+                print('   ' + match)
+        else:
+            print('\'' + argument + '\' is not in the toystore index.')
+            print('That does not mean it will not work — the index is curated, not exhaustive.')
+            print('Try:  toybox add ' + argument)
+
+        rejected = ToyStore.rejectionFor(argument)
+        if rejected:
+            print('')
+            print('Checked and found unusable: ' + rejected)
 
     @classmethod
     def urlFromArgument(cls, argument, force_update=False):
