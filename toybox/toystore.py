@@ -90,7 +90,7 @@ class ToyStore:
         if os.path.exists(folder):
             Utils.deleteFolder(folder, force_delete=True)
 
-        repo: Git = Git(Url('https://codeberg.org/DidierMalenfant/toystore'))
+        repo: Git = Git(Url('https://code.malenfant.net/didier/toystore'))
 
         head_branch = repo.getHeadBranch()
         commit_hash = repo.getLatestCommitHashForBranch(head_branch)

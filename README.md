@@ -8,7 +8,7 @@ A **Lua**, **C** and asset dependency manager for the [**Playdate**](https://pla
 
 Some **toyboxes** may provide **C** code, some may provide **Lua** code or **Lua** extensions written in **C** and some may provide just assets. Some **toyboxes** may provide all three or only two of these, it's completely up to the **toybox** creator and maintainer.
 
-The main repo for the project is on [**codeberg**](https://codeberg.org/DidierMalenfant/toybox.py).
+The main repo for the project is on my [**code repo**](https://code.malenfant.net/didier/toybox.py).
 
 Playdate is a registered trademark of [**Panic**](https://panic.com).
 
@@ -78,13 +78,13 @@ The `add` command takes up to two arguments:
 toybox add <name/url> <version>
 ```
 
-The first argument should either be name of a toybox, if it is listed in the **toystore**, the full url to a **git** repository which contains the **toybox** you would like to add, such as `https://codeberg.org/DidierMalenfant/modplayer.git`. For example, because `modplayer is on the **toystore**, any of the short forms below will point to the same repository:
+The first argument should either be name of a toybox, if it is listed in the **toystore**, the full url to a **git** repository which contains the **toybox** you would like to add, such as `https://code.malenfant.net/didier/modplayer.git`. For example, because `modplayer is on the **toystore**, any of the short forms below will point to the same repository:
 
 ``` console
-toybox add modplayer
-toybox add https://codeberg.org/DidierMalenfant/modplayer
-toybox add codeberg.org/DidierMalenfant/modplayer
-toybox add DidierMalenfant/modplayer
+toybox add easy-pattern
+toybox add https://github.com/ebeneliason/easy-pattern
+toybox add github.com/ebeneliason/easy-pattern
+toybox add ebeneliason/easy-pattern
 ```
 
 **toyboxes** do not need to be hosted on [Github](https://github.com) but, as shown above, if the server url is omitted then Github is assumed.
@@ -220,11 +220,11 @@ std = "lua54+playdate+toyboxes"
 operators = {"+=", "-=", "*=", "/="}
 ```
 
-Make sure to always run `luacheck` from the root folder of your project in order for these definitions to work correctly. For the time being, compound operators support is not part of the main branch of Luacheck. You can experiment with it by installing this [forked branch](https://codeberg.org/DidierMalenfant/luacheck/tree/compound-operators) of Luacheck.
+Make sure to always run `luacheck` from the root folder of your project in order for these definitions to work correctly. For the time being, compound operators support is not part of the main branch of Luacheck. You can experiment with it by installing this [forked branch](https://code.malenfant.net/didier/luacheck/tree/compound-operators) of Luacheck.
 
 ### The toystore
 
-The **toystore** is an online registry of known **toyboxes** and their `url` so that they can be referred to by only their names. It is located on [Github](https://codeberg.org/DidierMalenfant/toystore) and new **toyboxes** can be added to it by simply submitting a PR. This is purely for convenience though and there is no obligation that a **toybox** be added to the **toystore** for it to be freely available to anyone since you can always use its `url` directly.
+The **toystore** is an online registry of known **toyboxes** and their `url` so that they can be referred to by only their names. It is located on [Github](https://code.malenfant.net/didier/toystore) and new **toyboxes** can be added to it by simply submitting a PR. This is purely for convenience though and there is no obligation that a **toybox** be added to the **toystore** for it to be freely available to anyone since you can always use its `url` directly.
 
 To see a list of all available **toyboxes** in the **toystore** you can use the `store content` command:
 
@@ -242,10 +242,10 @@ Information from the **toystore** is cached locally on your computer. You can us
 
 ### Adding the toybox powered badge
 
-If your projects use **toyboxes**, you can let others know that they are [![Toybox Powered](https://img.shields.io/badge/toybox.py-powered-orange)](https://codeberg.org/DidierMalenfant/toybox.py) by adding this badge to your `README.md` file:
+If your projects use **toyboxes**, you can let others know that they are [![Toybox Powered](https://img.shields.io/badge/toybox.py-powered-orange)](https://code.malenfant.net/didier/toybox.py) by adding this badge to your `README.md` file:
 
 ```
-[![Toybox Powered](https://img.shields.io/badge/toybox.py-powered-orange)](https://codeberg.org/DidierMalenfant/toybox.py)
+[![Toybox Powered](https://img.shields.io/badge/toybox.py-powered-orange)](https://code.malenfant.net/didier/toybox.py)
 ```
 
 ### Creating your own toyboxes
@@ -388,7 +388,7 @@ function MyPdPi.getMyPic()
     return playdate.graphics.image.new(`toybox_assets/github.com/MyUsername/MyRepo/images/MyPic`)
 end
 ```
-That way they do not have to deal with the path to your asset. Check out the [FontSample](https://codeberg.org/DidierMalenfant/FontSample) sample **toybox** for an examples of how to do this.
+That way they do not have to deal with the path to your asset. Check out the [FontSample](https://code.malenfant.net/didier/FontSample) sample **toybox** for an examples of how to do this.
 
 You can override the subfolder used for your **toybox**'s assets by using the `set assets_sub_folder` command:
 
@@ -440,11 +440,11 @@ operators = {"+=", "-=", "*=", "/="}
 
 #### Adding your toybox to the toystore
 
-If you want to make it easy for others to use your **toybox**, you can submit a PR to the **[toystore](https://codeberg.org/DidierMalenfant/toystore)** in order for them to be able to refer to your **toybox** simply by its name. Entries in the toystore are located in the file `toystore.toml` and are be in the following format:
+If you want to make it easy for others to use your **toybox**, you can submit a PR to the **[toystore](https://code.malenfant.net/didier/toystore)** in order for them to be able to refer to your **toybox** simply by its name. Entries in the toystore are located in the file `toystore.toml` and are be in the following format:
 
 ```toml
 [Plupdate]
-url = "https://codeberg.org/DidierMalenfant/Plupdate"
+url = "https://code.malenfant.net/didier/Plupdate"
 description = "The playdate.update() manager."
 author = "Didier Malenfant <coding@malenfant.net>"
 license = "MIT"
@@ -459,17 +459,17 @@ It's not required, but it's always a good idea, to add a word about **toybox.py*
 ```console
 **MyPdPi** is a [**Playdate**](https://play.date) **toybox** which lets you calculate Pi to an infinite number of decimals.
 
-You can add it to your **Playdate** project by installing [**toybox.py**](https://codeberg.org/DidierMalenfant/toybox.py), going to your project folder in a Terminal window and typing:
+You can add it to your **Playdate** project by installing [**toybox.py**](https://code.malenfant.net/didier/toybox.py), going to your project folder in a Terminal window and typing:
 
     toybox add MyGitHubUsername/MyPdPi
     toybox update
 
 This **toybox** contains both **Lua** and **C** toys for you to play with.
 ```
-You can also add a nice [![Toybox Compatible](https://img.shields.io/badge/toybox.py-compatible-brightgreen)](https://codeberg.org/DidierMalenfant/toybox.py) badge like this:
+You can also add a nice [![Toybox Compatible](https://img.shields.io/badge/toybox.py-compatible-brightgreen)](https://code.malenfant.net/didier/toybox.py) badge like this:
 
 ```
-[![Toybox Compatible](https://img.shields.io/badge/toybox.py-compatible-brightgreen)](https://codeberg.org/DidierMalenfant/toybox.py)
+[![Toybox Compatible](https://img.shields.io/badge/toybox.py-compatible-brightgreen)](https://code.malenfant.net/didier/toybox.py)
 ```
 
 Don't forget to also let us know about your **toyboxes** via social media (`#toyboxpy`, mentions or DM) so that we can spread the word too...

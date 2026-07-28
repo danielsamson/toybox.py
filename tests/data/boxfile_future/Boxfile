@@ -1,12 +1,12 @@
 {
     "toyboxes": {
-        "DidierMalenfant/pdbase": "1"
+        "code.malenfant.net/didier/pdbase": "1"
     },
     "config": {
         "lua_import": "source/main.lua"
     },
     "versions": {
-        "DidierMalenfant/pdbase": "1.2.3"
+        "code.malenfant.net/didier/pdbase": "1.2.3"
     },
     "other": {
         "Future": "stuff"

@@ -49,7 +49,7 @@ class MockGit:
 
 @pytest.fixture
 def dependency_object():
-    dependency = Dependency(Url('codeberg.org/DidierMalenfant/MyProject.py'))
+    dependency = Dependency(Url('code.malenfant.net/didier/MyProject.py'))
     dependency.git = MockGit(['v1.0.0', 'v1.0.2', 'v2.0.0', 'v2.1.0', 'v3.0.0', 'v3.2.3'],
                              {'main': 'aaf867d2725ab51a770b036c219e1cfb676e79b7', 'develop': '10167a78efd194d4984c3e670bec38b8ccaf97eb'})
     return dependency

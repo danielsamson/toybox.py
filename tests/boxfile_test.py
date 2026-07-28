@@ -19,7 +19,7 @@ def test_constructor_old_format():
     urls = boxfile.urls()
     assert len(urls) == 1
     url = urls[0]
-    assert url.as_string == 'codeberg.org/DidierMalenfant/pdbase'
+    assert url.as_string == 'code.malenfant.net/didier/pdbase'
     assert boxfile.versionsForUrl(url) == [Version('>=1.0.0'), Version('<2.0.0')]
     assert boxfile.maybeInstalledVersionForUrl(url) is None
     assert boxfile.maybeLuaImportFile() is None
@@ -30,7 +30,7 @@ def test_constructor_current_format():
     urls = boxfile.urls()
     assert len(urls) == 1
     url = urls[0]
-    assert url.as_string == 'codeberg.org/DidierMalenfant/pdbase'
+    assert url.as_string == 'code.malenfant.net/didier/pdbase'
     assert boxfile.versionsForUrl(url) == [Version('>=1.0.0'), Version('<2.0.0')]
     assert boxfile.maybeInstalledVersionForUrl(url) == Version('1.2.3')
     assert boxfile.maybeLuaImportFile() == 'source/main.lua'
@@ -82,14 +82,14 @@ def test_constructor_malformed_file():
 
 def test_versionsForUrl(version_string, expected_results):  # noqa: E304
     boxfile = Boxfile(os.path.join('tests', 'data', 'boxfile_current'))
-    url = Url('DidierMalenfant/pdbase')
+    url = Url('didier/pdbase')
     boxfile.addDependencyWithURLAt(url, version_string)
     assert boxfile.versionsForUrl(url) == expected_results
 
 
 def test_versionsForUrl_incorrect_versions():
     boxfile = Boxfile(os.path.join('tests', 'data', 'boxfile_current'))
-    url = Url('DidierMalenfant/pdbase')
+    url = Url('didier/pdbase')
     boxfile.addDependencyWithURLAt(url, '>1 <=4.5 >4 <6')
     with pytest.raises(SyntaxError):
         boxfile.versionsForUrl(url)

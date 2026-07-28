@@ -505,7 +505,7 @@ class Toybox:
         print('OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE')
         print('SOFTWARE.')
         print('')
-        print('Official repo can be found at https://codeberg.org/DidierMalenfant/toybox.py')
+        print('Official repo can be found at https://code.malenfant.net/didier/toybox.py')
         print('')
 
     @classmethod
@@ -637,7 +637,7 @@ class Toybox:
                                                            time_in_seconds=(24 * 60 * 60)):
                 return
 
-            latest_version = Git(Url('codeberg.org/DidierMalenfant/toybox.py')).getLatestVersion()
+            latest_version = Git(Url('code.malenfant.net/didier/toybox.py')).getLatestVersion()
             if latest_version is None:
                 return
 

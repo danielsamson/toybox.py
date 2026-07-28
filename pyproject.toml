@@ -27,10 +27,10 @@ dependencies = ['semver',
 dynamic = ["version"]
 
 [project.urls]
-Homepage = "https://codeberg.org/DidierMalenfant/toybox.py"
-Documentation = "https://codeberg.org/DidierMalenfant/toybox.py#readme"
-"Bug Tracker" = "https://codeberg.org/DidierMalenfant/toybox.py/issues"
-"Source Code" = "https://codeberg.org/DidierMalenfant/toybox.py"
+Homepage = "https://code.malenfant.net/didier/toybox.py"
+Documentation = "https://code.malenfant.net/didier/toybox.py#readme"
+"Bug Tracker" = "https://code.malenfant.net/didier/toybox.py/issues"
+"Source Code" = "https://code.malenfant.net/didier/toybox.py"
 
 [tool.hatch.version]
 path = "toybox/__about__.py"
