@@ -1,0 +1,27 @@
+name: Tests
+
+# The whole point of this fork is outliving environments, so catch a new Python
+# breaking us before a downstream build does.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.9', '3.10', '3.11', '3.12', '3.13']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install
+        run: pip install . pytest flake8
+      - name: Lint
+        run: flake8 toybox tests
+      - name: Tests
+        run: pytest tests/ -q
