@@ -252,12 +252,31 @@ Known **toyboxes**, verified alive as of July 2026 — PRs adding entries are we
 
 | Toybox | Add with | Provides |
 |---|---|---|
+| [acetate](https://github.com/ebeneliason/acetate) | `toybox add ebeneliason/acetate` | Visual sprite-debugging overlay for the Simulator (Lua) |
 | [AnimatedSprite](https://github.com/Whitebrim/AnimatedSprite) | `toybox add Whitebrim/AnimatedSprite` | Sprite class with imagetable animation and a finite state machine (Lua) |
-| [playbox2d](https://github.com/mierau/playbox2d) | `toybox add mierau/playbox2d` | Port of box2d-lite physics to C for the Playdate |
+| [easy-pattern](https://github.com/ebeneliason/easy-pattern) | `toybox add ebeneliason/easy-pattern` | Animated 8×8 patterns with easing (Lua) |
+| [LDtkImporter](https://github.com/NicMagnier/PlaydateLDtkImporter) | `toybox add NicMagnier/PlaydateLDtkImporter` | Import LDtk level-editor tilemaps (Lua) |
+| [librif](https://github.com/risolvipro/librif) | `toybox add risolvipro/librif` | Grayscale image encoding/reading with RLE compression (C and Lua) |
+| [pd-canvas](https://github.com/danielsamson/pd-canvas) | `toybox add danielsamson/pd-canvas` | Headless canvas rasterizer for testing UIs without the Simulator (Lua, dev/test only) |
+| [pd-options](https://github.com/macvogelsang/pd-options) | `toybox add macvogelsang/pd-options` | Options/settings menu with saved preferences (Lua) |
 | [pdDialogue](https://github.com/PlaydateSquad/pdDialogue) | `toybox add PlaydateSquad/pdDialogue` | Dialogue system (Lua) |
+| [pdParticles](https://github.com/PossiblyAxolotl/pdParticles) | `toybox add PossiblyAxolotl/pdParticles` | Particle effects (Lua) — GitHub repo frozen Aug 2025, development moved to Codeberg |
+| [playbox2d](https://github.com/mierau/playbox2d) | `toybox add mierau/playbox2d` | Port of box2d-lite physics to C for the Playdate |
+| [playout](https://github.com/potch/playout) | `toybox add potch/playout` | UI layout / box-model library (Lua) |
 | [PlaydateSequence](https://github.com/NicMagnier/PlaydateSequence) | `toybox add NicMagnier/PlaydateSequence` | Animation sequences built from easing functions (Lua) |
 | [pp-lib](https://github.com/RobertCurry0216/pp-lib) | `toybox add RobertCurry0216/pp-lib` | Platformer building blocks (Lua) |
-| [pd-canvas](https://github.com/danielsamson/pd-canvas) | `toybox add danielsamson/pd-canvas` | Headless canvas rasterizer for testing UIs without the Simulator (Lua, dev/test only) |
+| [RobKohr's mono font](https://github.com/RobKohr/robkohr-mono-5x8-font-for-playdate) | `toybox add RobKohr/robkohr-mono-5x8-font-for-playdate` | Readable 5×8 monospaced font |
+| [roomy](https://github.com/RobertCurry0216/roomy-playdate) | `toybox add RobertCurry0216/roomy-playdate` | Stack-based scene management (Lua) |
+
+This table folds in every surviving entry of the original **toystore** registry, whose
+final state (crawled 2024-05-15) is preserved verbatim in
+[docs/toystore-2024-05.toml](docs/toystore-2024-05.toml). Not everything survived: the
+original author's own libraries — **Aspen** (platformer engine), **modplayer** (Amiga
+module player), **pdbase** (SDK utilities), **Plupdate** (update manager), **Signal**
+(pub/sub), **TileMap**, and **TiledUp** (Tiled importer) — were deleted with his
+accounts. At least Signal, TileMap, and TiledUp have
+[Software Heritage](https://archive.softwareheritage.org) snapshots and could be revived
+by a willing maintainer, the same way this repo was.
 
 Remember that a **toybox** does not have to be listed anywhere, or even know about **toybox.py**, to be usable: any git repo that follows the usual **Playdate** source layout can be added by its `username/repo` or url.
 

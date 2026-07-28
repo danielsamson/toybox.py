@@ -1,0 +1,134 @@
+# RECOVERED HISTORICAL DOCUMENT — do not treat these URLs as live.
+#
+# This is the final state of the original toystore registry (toystore.toml from
+# https://codeberg.org/DidierMalenfant/toystore), recovered from the Software Heritage
+# archive: snapshot swh:1:snp:682e580b70f701508c32e03761162d1be829e4bf, crawled
+# 2024-05-15. The codeberg.org/DidierMalenfant repos listed below were deleted when the
+# project was discontinued. See the README's "Finding toyboxes" section for the entries
+# verified alive today.
+#
+# Original file header and content follow verbatim.
+
+# SPDX-FileCopyrightText: 2022-present toybox.py Contributors
+#
+# SPDX-License-Identifier: MIT
+
+[acetate]
+url = "https://github.com/ebeneliason/acetate"
+description = "A visual debugging suite for Playdate."
+author = "Eben Eliason <eben@gruntwork.io>"
+license = "MIT"
+
+[AnimatedSprite]
+url = "https://github.com/Whitebrim/AnimatedSprite"
+description = "Sprite class extension with imagetable animation and finite state machine support for Playdate."
+author = "Whitebrim <deni7off@yandex.ru>"
+license = "MIT"
+
+[Aspen]
+url = "https://codeberg.org/DidierMalenfant/Aspen"
+description = "A Simple Platformer ENgine for the Playdate."
+author = "Didier Malenfant <coding@malenfant.net>"
+license = "MIT"
+
+[easy-pattern]
+url = "https://github.com/ebeneliason/easy-pattern"
+description = "Easy animated patterns for Playdate."
+author = "Eben Eliason <eben@gruntwork.io>"
+license = "MIT"
+
+[LDtkImporter]
+url = "https://github.com/NicMagnier/PlaydateLDtkImporter"
+description = "Load tilemaps created with LDtk in your playdate games."
+author = "Nic Magnier"
+
+[librif]
+url = "https://github.com/risolvipro/librif"
+description = "A lightweight library to encode and read grayscale images."
+author = "Risolvi Productions <https://github.com/risolvipro>"
+license = "MIT"
+
+[modplayer]
+url = "https://codeberg.org/DidierMalenfant/modplayer"
+description = "Amiga SoundTracker/ProTracker Module Player for Playdate."
+author = "Didier Malenfant <coding@malenfant.net>"
+license = "MIT"
+
+[options]
+url = "https://github.com/macvogelsang/pd-options"
+description = "Robust and portable options menu for the Lua SDK"
+author = "Mac Vogelsang <macvogelsang.com>"
+license = "MIT"
+
+[pdbase]
+url = "https://codeberg.org/DidierMalenfant/pdbase"
+description = "Handy utility functions and SDK additions."
+author = "Didier Malenfant <coding@malenfant.net>"
+license = "MIT"
+
+[pdDialogue]
+url = "https://github.com/PizzaFuel/pdDialogue"
+description = "A Playdate dialogue system."
+author = "PizzaFuel <https://github.com/PizzaFuel>"
+license = "MIT"
+
+[pdParticles]
+url = "https://github.com/PossiblyAxolotl/pdParticles"
+description = "A free Playdate particle library."
+author = "PossiblyAxolotl <possiblyaxolotl@gmail.com>"
+license = "MIT"
+
+[playbox2d]
+url = "https://codeberg.org/DidierMalenfant/playbox2d"
+description = "A port of box2d lite from Erin Catto (http://www.gphysics.com)."
+author = "Dustin Mierau <https://github.com/mierau>"
+license = "MIT"
+
+[playout]
+url = "https://github.com/potch/playout"
+description = "UI library and box model for Playdate."
+author = "potch <https://github.com/potch>"
+license = "BSD 3-Clause"
+
+[Plupdate]
+url = "https://codeberg.org/DidierMalenfant/Plupdate"
+description = "The playdate.update() manager."
+author = "Didier Malenfant <coding@malenfant.net>"
+license = "MIT"
+
+[pplib]
+url = "https://github.com/RobertCurry0216/pp-lib"
+description = "A robust platformer library"
+author = "Robert Curry <https://github.com/RobertCurry0216>"
+
+[RobkohrFont]
+url = "https://github.com/RobKohr/robkohr-mono-5x8-font-for-playdate"
+description = "A 5x8 font that is readable & monospaced without it looking too boring."
+author = "Rob Kohr <spam@robkohr.com>"
+
+[roomy]
+url = "https://github.com/RobertCurry0216/roomy-playdate"
+description = "A stack based scene management library"
+author = "Robert Curry <https://github.com/RobertCurry0216>"
+
+[Sequence]
+url = "https://github.com/NicMagnier/PlaydateSequence"
+description = "Create animations with simple sequences of easing functions in your playdate game."
+author = "Nic Magnier"
+
+[Signal]
+url = "https://codeberg.org/DidierMalenfant/Signal.git"
+description = "A Lua class for subscribing to keys and notifying subscribers of that key."
+author = "Dustin Mierau <https://github.com/mierau>"
+
+[TileMap]
+url = "https://codeberg.org/DidierMalenfant/TileMap"
+description = "A drop-in replacement for 'playdate.graphics.tilemap' with new features."
+author = "Didier Malenfant <coding@malenfant.net>"
+license = "MIT"
+
+[TiledUp]
+url = "https://codeberg.org/DidierMalenfant/TiledUp"
+description = "A Playdate toybox which lets you import and use Tiled levels."
+author = "Didier Malenfant <coding@malenfant.net>"
+license = "MIT"
