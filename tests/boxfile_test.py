@@ -68,8 +68,10 @@ def test_constructor_malformed_file():
     with pytest.raises(SyntaxError) as e:
         Boxfile(folder)
 
-    test = 'Malformed JSON in Boxfile \'' + os.path.join(folder, 'Boxfile') + '\'.\nExpecting \',\' delimiter: line 3 column 5 (char 40).'
-    assert str(e.value) == test
+    # -- The second line of the message comes from Python's json module and its exact
+    # -- wording varies between Python versions, so only check the part we control.
+    test = 'Malformed JSON in Boxfile \'' + os.path.join(folder, 'Boxfile') + '\'.\n'
+    assert str(e.value).startswith(test)
 
 
 @pytest.mark.parametrize('version_string, expected_results', [
