@@ -55,6 +55,15 @@ class Version:
             self.original_version = version
             self.type = VersionType.local
         elif first_character == '>' or first_character == '<' or first_character in string.digits or (first_character == 'v' and second_character in string.digits):
+            # -- The Boxfile's installed section records semver versions as
+            # -- '<version>@<ref-hash>' so a moved tag can be detected later. Only strip
+            # -- a suffix that plausibly IS a hash — a tag merely named like
+            # -- '1.0.0@beta' must keep failing semver parsing exactly as it used to.
+            maybe_version, _, maybe_hash = version.partition('@')
+            if Version._looksLikeARefHash(maybe_hash):
+                self.commit_hash = maybe_hash
+                version = maybe_version
+
             self.original_version = version
 
             if first_character == '>':
@@ -127,7 +136,18 @@ class Version:
 
             version_string = switch.get(self.operator) + str(self.asSemVer)
 
+            if self.commit_hash is not None:
+                version_string += '@' + self.commit_hash
+
         return version_string
+
+    @classmethod
+    def _looksLikeARefHash(cls, text: str) -> bool:
+        # -- Abbreviated through SHA-256 lengths, hex only.
+        if len(text) < 7 or len(text) > 64:
+            return False
+
+        return all(character in '0123456789abcdef' for character in text)
 
     def majorVersion(self) -> str:
         if self.asSemVer is None:

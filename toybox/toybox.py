@@ -247,6 +247,13 @@ class Toybox:
                         print('       - ' + str(dep) + ' -> Version ' + str(version_available) + ' is available.')
 
                     something_needs_updating = True
+                else:
+                    # -- Same version — but if we recorded the tag's ref hash when it was
+                    # -- installed and it no longer matches, the tag was moved upstream.
+                    current_hash = Toybox.maybeTagRefHashFor(dep, version_available)
+                    if version_installed.commit_hash is not None and current_hash is not None and version_installed.commit_hash != current_hash:
+                        print('       - ' + str(dep) + ' -> Tag \'' + version_available.original_version + '\' has moved upstream since it was installed.')
+                        something_needs_updating = True
 
             something_needs_updating |= self.checkForUpdates(dep_folder, already_displayed)
 
@@ -399,10 +406,32 @@ class Toybox:
             force_install = self.force_mode
 
         can_copy_dep: bool = force_install is False and dep.existsInBackup() and dep.resolveVersion() == existing_version
+
+        if can_copy_dep:
+            # -- Same version as last time — but a tag can be MOVED upstream. If we
+            # -- recorded the tag's ref hash at install time and it changed, the same
+            # -- version name now means different code: say so loudly and reinstall.
+            current_hash = Toybox.maybeTagRefHashFor(dep, dep.resolveVersion())
+            if existing_version.commit_hash is not None and current_hash is not None and existing_version.commit_hash != current_hash:
+                print('Warning: tag \'' + dep.resolveVersion().original_version + '\' of \'' + dep.url.as_string + '\' no longer points where it did when last installed (was ' + existing_version.commit_hash[:12] + ', now ' + current_hash[:12] + '). The tag has moved upstream — reinstalling from its new target.')
+                can_copy_dep = False
+
         if can_copy_dep:
             # -- If we already had the same version installed, we can just copy it.
             self.copyToyboxFromBackup(dep)
             self.copyAssetsFromBackupIfAny(dep)
+
+            # -- Re-record the installed version even though it did not change:
+            # -- saveIfModified() prunes installed entries that were not re-asserted
+            # -- this run, so skipping this would silently drop unchanged dependencies
+            # -- from the installed section whenever any OTHER dependency updated.
+            # -- (This is also where pre-hash installs get their ref hash backfilled.)
+            if existing_version.commit_hash is None:
+                current_hash = Toybox.maybeTagRefHashFor(dep, existing_version)
+                if current_hash is not None:
+                    existing_version = Version(str(existing_version) + '@' + current_hash)
+
+            self.box_file.setInstalledVersionForDependency(dep, existing_version)
         else:
             version = dep.installIn(Paths.toyboxesFolder())
             if version is not None:
@@ -416,6 +445,12 @@ class Toybox:
                     installed_version += '@' + commit_hash
                 elif version.isLocal():
                     self.installed_a_local_toybox = True
+                else:
+                    # -- Record the tag's ref hash alongside the version so a later
+                    # -- update can detect the tag being moved upstream.
+                    tag_hash = Toybox.maybeTagRefHashFor(dep, version)
+                    if tag_hash is not None:
+                        installed_version += '@' + tag_hash
 
                 print('Installed \'' + str(dep) + '\' -> ' + str(version) + '.')
 
@@ -654,6 +689,14 @@ class Toybox:
             raise RuntimeError('Cannot look up \'' + argument + '\' by name: the toystore went away with the original project. Use the full repo form instead: toybox add <username>/' + argument + '.')
 
         return Url(argument)
+
+    @classmethod
+    def maybeTagRefHashFor(cls, dep: Dependency, version: Version) -> str:
+        """The current ref hash of the tag a resolved semver version points at, if known."""
+        if version is None or version.isBranch() or version.isLocal():
+            return None
+
+        return dep.git.listRefs().get('tags/' + version.original_version)
 
     @classmethod
     def backupToyboxes(cls):

@@ -98,6 +98,18 @@ class Forge:
         self._git(['push', '-q', str(bare), 'main'], src)
         self._git(['push', '-q', '--tags', str(bare)], src)
 
+    def move_tag(self, name, tag, files):
+        """Commit new content and force-move an existing tag onto it — upstream tampering."""
+        src = self.src_root / name
+        self._write(src, files)
+        self._git(['add', '-A'], src)
+        self._git(['commit', '-q', '-m', 'moved'], src)
+        self._git(['tag', '-f', tag], src)
+
+        bare = self.serve_root / 'testuser' / (name + '.git')
+        self._git(['push', '-q', str(bare), 'main'], src)
+        self._git(['push', '-q', '-f', str(bare), 'refs/tags/' + tag], src)
+
 
 @pytest.fixture(scope='module')
 def forge(tmp_path_factory):
@@ -146,8 +158,8 @@ def test_update_installs_resolves_range_and_moves_assets(forge, project):
     assert (installed / 'simple.lua').exists()
     assert not (installed / '.git').exists()
 
-    # -- '1' must resolve to the highest 1.x, not 2.0.0.
-    assert read_boxfile(project)['installed'] == {spec: '1.1.0'}
+    # -- '1' must resolve to the highest 1.x, not 2.0.0 (recorded as version@ref-hash).
+    assert read_boxfile(project)['installed'][spec].partition('@')[0] == '1.1.0'
 
     imports = (project / 'toyboxes' / 'toyboxes.lua').read_text()
     assert "/simple.lua'" in imports
@@ -250,6 +262,58 @@ def test_circular_dependency_is_reported_not_a_stack_overflow(forge, project):
 
     with pytest.raises(RuntimeError, match='Circular toybox dependency'):
         Toybox(['update']).update()
+
+
+def test_semver_install_records_the_tag_ref_hash(forge, project):
+    spec = forge.make_repo('hashed', files={'hashed.lua': 'print(1)'}, tags=('1.0.0',))
+    write_boxfile(project, {spec: '1'})
+
+    Toybox(['update']).update()
+
+    installed = read_boxfile(project)['installed'][spec]
+    version, _, ref_hash = installed.partition('@')
+    assert version == '1.0.0'
+    assert len(ref_hash) == 40 and all(c in '0123456789abcdef' for c in ref_hash)
+
+
+def test_moved_tag_is_detected_and_reinstalled(forge, project, capsys):
+    spec = forge.make_repo('sneaky', files={'sneaky.lua': 'print("v1")'}, tags=('1.0.0',))
+    write_boxfile(project, {spec: '1'})
+    Toybox(['update']).update()
+    hash_before = read_boxfile(project)['installed'][spec].partition('@')[2]
+
+    # -- Upstream moves the 1.0.0 tag onto different code.
+    forge.move_tag('sneaky', '1.0.0', files={'sneaky.lua': 'print("v1, but different")'})
+
+    assert Toybox(['check']).checkForUpdates() is True
+    assert 'has moved upstream' in capsys.readouterr().out
+
+    Toybox(['update']).update()
+
+    assert 'The tag has moved upstream' in capsys.readouterr().out
+    assert 'different' in (toybox_folder(project, spec) / 'sneaky.lua').read_text()
+
+    hash_after = read_boxfile(project)['installed'][spec].partition('@')[2]
+    assert hash_after != hash_before
+
+
+def test_unchanged_deps_survive_in_installed_when_a_sibling_updates(forge, project):
+    # -- Regression: the installed section used to prune entries that were not
+    # -- re-recorded during an update, silently dropping every UNCHANGED dependency
+    # -- whenever any other dependency updated.
+    stable_spec = forge.make_repo('stable', files={'stable.lua': 'print(1)'}, tags=('1.0.0',))
+    moving_spec = forge.make_repo('moving', files={'moving.lua': 'print(1)'}, tags=('1.0.0',))
+    write_boxfile(project, {stable_spec: '1', moving_spec: '1'})
+    Toybox(['update']).update()
+
+    # -- The '1' range picks the new 1.1.0 up on the next update; 'stable' is unchanged.
+    forge.push_update('moving', files={'moving.lua': 'print(2)'}, tags=('1.1.0',))
+
+    Toybox(['update']).update()
+
+    installed = read_boxfile(project)['installed']
+    assert installed[moving_spec].startswith('1.1.0@')
+    assert installed[stable_spec].startswith('1.0.0@')
 
 
 def test_interrupted_update_restores_the_previous_install(forge, project, monkeypatch):

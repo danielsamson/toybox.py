@@ -137,6 +137,53 @@ def test_boxfile_save_failure_leaves_the_original_intact(tmp_path, monkeypatch):
     assert [p.name for p in tmp_path.iterdir()] == ['Boxfile']
 
 
+def test_semver_version_carries_an_optional_ref_hash():
+    # -- The installed section records '1.2.3@<hash>' so moved tags can be detected.
+    recorded = Version('1.2.3@' + 'a' * 40)
+
+    assert recorded.commit_hash == 'a' * 40
+    assert str(recorded) == '1.2.3@' + 'a' * 40
+    assert recorded == Version('1.2.3')            # -- the hash is not part of version equality
+
+    # -- A tag merely NAMED like that must keep failing semver parsing as before.
+    with pytest.raises(ValueError):
+        Version('1.0.0@beta')
+
+
+def test_git_retries_transient_failures_once(monkeypatch):
+    git = Git(Url('someuser/somerepo'))
+    attempts = []
+
+    def fake_run(commands, env):
+        attempts.append(commands)
+        if len(attempts) == 1:
+            return (128, '', 'fatal: unable to access \'https://github.com/...\': connection reset')
+        return (0, 'all good', '')
+
+    monkeypatch.setattr(git, '_runGitCommand', fake_run)
+    monkeypatch.setattr('toybox.git.time.sleep', lambda seconds: None)
+
+    assert git.git('ls-remote --refs') == 'all good'
+    assert len(attempts) == 2
+
+
+def test_git_does_not_retry_permanent_failures_and_names_the_repo(monkeypatch):
+    git = Git(Url('someuser/somerepo'))
+    attempts = []
+
+    def fake_run(commands, env):
+        attempts.append(commands)
+        return (128, '', 'fatal: remote error: access denied or repository not exported')
+
+    monkeypatch.setattr(git, '_runGitCommand', fake_run)
+
+    with pytest.raises(RuntimeError) as e:
+        git.git('ls-remote --refs')
+
+    assert len(attempts) == 1
+    assert 'someuser/somerepo' in str(e.value)
+
+
 def test_argument_error_exits_nonzero(monkeypatch, capsys):
     # -- An unknown command used to print the error but still exit 0, which lets a
     # -- misspelled command pass silently in CI scripts.
