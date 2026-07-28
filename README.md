@@ -12,7 +12,8 @@ A **Lua**, **C** and asset dependency manager for the [**Playdate**](https://pla
 > license — see the first two commits for full provenance. The original commit history
 > could not be recovered. The **toystore** (the author-hosted name registry) is gone, so
 > the `store` command is retired and toyboxes are added by `<username>/<repo>`; everything
-> else works as it always did.
+> else works as it always did. Moving a repo off the dead upstream? See
+> [MIGRATING.md](MIGRATING.md) — a step-by-step playbook an agent can work through.
 
 **toybox.py** is a Python port of [Jeremy McAnally](https://github.com/jm)'s toybox app. **toybox.py** lets you easily use, create and share third party libraries, called **toyboxes**, for any **Playdate** project. It handles all dependencies between **toyboxes** automatically and provides precise versioning for each **toybox**.
 
