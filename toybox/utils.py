@@ -4,6 +4,7 @@
 
 import os
 import shutil
+import sys
 import errno
 import stat
 import glob
@@ -12,13 +13,17 @@ import time
 from typing import List
 
 
-def _handleRemoveReadonly(func, path, exc):
-    excvalue = exc[1]
+def _removeReadonlyAndRetry(func, path, excvalue):
     if func in (os.rmdir, os.remove, os.unlink) and excvalue.errno == errno.EACCES:
         os.chmod(path, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)  # -- 0777
         func(path)
     else:
         raise
+
+
+def _handleRemoveReadonly(func, path, exc):
+    # -- shutil.rmtree onerror-style handler (exc is an exc_info tuple).
+    _removeReadonlyAndRetry(func, path, exc[1])
 
 
 class Utils:
@@ -56,13 +61,14 @@ class Utils:
     def deleteFolder(cls, folder: str, force_delete: bool = False):
         if os.path.exists(folder):
             if force_delete is True:
-                ignore_errors = False
-                on_error = _handleRemoveReadonly
+                # -- onerror was deprecated in Python 3.12 in favor of onexc, which
+                # -- receives the exception instead of an exc_info tuple.
+                if sys.version_info >= (3, 12):
+                    shutil.rmtree(folder, onexc=_removeReadonlyAndRetry)
+                else:
+                    shutil.rmtree(folder, onerror=_handleRemoveReadonly)
             else:
-                ignore_errors = True
-                on_error = None
-
-            shutil.rmtree(folder, ignore_errors=ignore_errors, onerror=on_error)
+                shutil.rmtree(folder, ignore_errors=True)
 
     @classmethod
     def softlinkFromTo(cls, source: str, dest: str):

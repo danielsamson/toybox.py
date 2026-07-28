@@ -4,12 +4,14 @@
 
 import os
 import pytest
+import stat
 import sys
 
 from toybox.boxfile import Boxfile
 from toybox.files import Files
 from toybox.git import Git
 from toybox.url import Url
+from toybox.utils import Utils
 from toybox.__main__ import main
 
 
@@ -53,6 +55,30 @@ def test_pre_commit_hook_backup_and_restore(tmp_path, monkeypatch):
 
     with open(hook_path, 'r') as file:
         assert 'original hook' in file.read()
+
+
+def test_force_delete_removes_readonly_files(tmp_path):
+    # -- Exercises the rmtree error handler on whichever path (onexc/onerror) the
+    # -- running Python uses; cloned .git folders contain read-only objects.
+    folder = tmp_path / 'stubborn'
+    folder.mkdir()
+
+    file_path = folder / 'readonly-file'
+    file_path.write_text('hands off')
+    os.chmod(file_path, stat.S_IRUSR)
+    os.chmod(folder, stat.S_IRUSR | stat.S_IXUSR)
+
+    Utils.deleteFolder(str(folder), force_delete=True)
+
+    assert not folder.exists()
+
+
+def test_url_equality_against_other_types():
+    url = Url('someuser/somerepo')
+
+    assert (url == 'someuser/somerepo') is False
+    assert url != 42
+    assert url == Url('github.com/someuser/somerepo')
 
 
 def test_argument_error_exits_nonzero(monkeypatch, capsys):

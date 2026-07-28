@@ -15,6 +15,10 @@ from .url import Url
 class Git:
     """Utility methods for git repos."""
 
+    # -- Generous ceiling so a network stall fails instead of hanging forever, while a
+    # -- slow clone of a big dependency still has plenty of room.
+    command_timeout_in_seconds = 300
+
     def __init__(self, url: Url):
         """Setup access to the git repo at url."""
 
@@ -41,27 +45,34 @@ class Git:
 
         try:
             process = subprocess.Popen(commands, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
-            stdout, stderr = process.communicate()
+
+            try:
+                stdout, stderr = process.communicate(timeout=Git.command_timeout_in_seconds)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.communicate()
+                raise RuntimeError('Timed out running git against \'' + self.url + '\'.')
+
+            stdout = stdout.decode('utf-8', errors='replace')
+            stderr = stderr.decode('utf-8', errors='replace')
 
             if process.returncode != 0:
-                if str(stdout).startswith('b"usage: git'):
+                if stdout.startswith('usage: git'):
                     # -- git is giving us the usage info back it seems.
                     raise SyntaxError('Invalid git command line')
                 else:
-                    error = str(stderr)[2:-1]
-                    if error.startswith('fatal: not a git repository (or any of the parent directories): .git'):
+                    if stderr.startswith('fatal: not a git repository (or any of the parent directories): .git'):
                         raise RuntimeError('Error: Your project folder needs to be a git repo for certain commands to work correctly. Try `git init` to create one.')
 
                     # -- Or maybe something else went wrong.
-                    error = error.split('\\n')[0]
+                    error = stderr.split('\n')[0]
 
                     if error == 'remote: Invalid username or password.':
                         raise RuntimeError('Cannot access git repo at \'' + self.url + '\'. Maybe it is private?')
                     else:
                         raise RuntimeError('Error running git: ' + error)
 
-            # -- Output is bracketed with b'' when converted from bytes.
-            return str(stdout)[2:-1]
+            return stdout
         except RuntimeError:
             raise
         except SyntaxError:
@@ -72,7 +83,7 @@ class Git:
     def listRefs(self) -> Dict[str, str]:
         if self.refs is None:
             self.refs = {}
-            for ref in self.git('ls-remote --refs').split('\\n'):
+            for ref in self.git('ls-remote --refs').split('\n'):
                 refs_index = ref.find('refs/')
                 if refs_index >= 0:
                     self.refs[ref[refs_index + 5:]] = ref[:40]
@@ -91,7 +102,7 @@ class Git:
 
     def getHeadBranch(self) -> str:
         if self.head_branch is None:
-            for line in self.git('remote show').split('\\n'):
+            for line in self.git('remote show').split('\n'):
                 if line.startswith('  HEAD branch:'):
                     self.head_branch = line[15:]
 

@@ -40,6 +40,9 @@ class Url:
         self.repo_name = url_components[2]
 
     def __eq__(self, other: 'Url'):
+        if not isinstance(other, Url):
+            return NotImplemented
+
         return self.as_string == other.as_string
 
     def __hash__(self):

@@ -29,6 +29,7 @@ class Toybox:
 
         self.box_file = None
         self.dependencies = []
+        self.install_stack = []
         self.only_update = []
         self.installed_a_local_toybox = False
         self.local_update_folder = None
@@ -158,7 +159,10 @@ class Toybox:
         print('   --debug                  - Enable extra debugging information.')
         print('')
 
-    def printInfo(self, folder: str = None, already_displayed: List[Url] = []):
+    def printInfo(self, folder: str = None, already_displayed: List[Url] = None):
+        if already_displayed is None:
+            already_displayed = []
+
         if folder is None:
             self.box_file = box_file_for_folder = Boxfile(Paths.boxfileFolder())
             print('Resolving dependencies...')
@@ -194,7 +198,10 @@ class Toybox:
             if dep_folder_exists:
                 self.printInfo(dep_folder, already_displayed)
 
-    def checkForUpdates(self, folder: str = None, already_displayed: List[Url] = []) -> bool:
+    def checkForUpdates(self, folder: str = None, already_displayed: List[Url] = None) -> bool:
+        if already_displayed is None:
+            already_displayed = []
+
         if folder is None:
             self.box_file = box_file_for_folder = Boxfile(Paths.boxfileFolder())
             print('Resolving dependencies...')
@@ -361,6 +368,11 @@ class Toybox:
         method(self.second_argument, self.force_mode)
 
     def installDependency(self, dep: Dependency, force_install: bool = False):
+        # -- A dependency cycle (a needs b needs a) would otherwise recurse forever.
+        if dep.url in self.install_stack:
+            cycle = ' -> '.join([url.as_string for url in self.install_stack] + [dep.url.as_string])
+            raise RuntimeError('Circular toybox dependency: ' + cycle + '.')
+
         if self.local_update_folder is not None:
             maybe_local_path = os.path.join(self.local_update_folder, dep.url.repo_name)
             if os.path.exists(maybe_local_path):
@@ -413,8 +425,13 @@ class Toybox:
             self.moveAssetsFromToyboxIfAny(dep)
 
         dep_box_file = Boxfile.boxfileForDependency(dep)
-        for child_dep in dep_box_file.dependencies():
-            self.installDependency(child_dep, force_install)
+
+        self.install_stack.append(dep.url)
+        try:
+            for child_dep in dep_box_file.dependencies():
+                self.installDependency(child_dep, force_install)
+        finally:
+            self.install_stack.pop()
 
         if dependency_is_new:
             self.dependencies.append(dep)

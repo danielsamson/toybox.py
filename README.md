@@ -34,7 +34,7 @@ Playdate is a registered trademark of [**Panic**](https://panic.com).
 
 ### Installation
 
-**toybox.py** is a pure Python project. It requires at least [Python](https://python.org) 3.7 and access to the [git](https://git-scm.com) command line tool.
+**toybox.py** is a pure Python project. It requires at least [Python](https://python.org) 3.9 and access to the [git](https://git-scm.com) command line tool.
 
 You can install **toybox.py** by typing the following in a terminal window:
 
