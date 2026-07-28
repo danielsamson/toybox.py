@@ -309,20 +309,58 @@ resolved as a version — `toybox add ivansergeev/gfxp 2` fails with
 
 ### A note for toybox authors
 
-Playdate's `import` is not Lua's `require`: **it ignores return values**. So a library
-written in the usual `local M = {} … return M` style produces *nothing* when a game
-imports it, even though **toybox.py** installs and imports the file correctly. A toybox
-must publish a global instead:
+Playdate's `import` is not Lua's `require`, and the difference decides whether a library
+can be a **toybox** at all. Per *Inside Playdate*: `import` returns the file's value, but
+**runs each file only once — a second `import` of the same file returns `nil`**. The SDK's
+own example:
 
 ```lua
-GFXP = {}          -- reachable after import
--- return M        -- silently useless under Playdate's import
+-- a.lua
+return "hello"
+-- b.lua
+print("b says " .. (import "a" or "nil"))
+-- main.lua
+print(import "a" or "nil")
+import "b"
+--> hello
+--> b says nil
 ```
+
+That matters here because **toybox.py** generates an import line for every resolved
+dependency, and *that* line is the first import. Its return value goes nowhere. So a
+library written in the usual `local M = {} … return M` style installs correctly, is
+imported correctly, and still leaves the game with nothing — by the time your code runs
+`local M = import "thatlib"`, it returns `nil`.
+
+A toybox should therefore publish a **global**:
+
+```lua
+GFXP = {}          -- reachable by any file after the generated import
+-- return M        -- consumed by the generated import; your game sees nil
+```
+
+(Verified on the Simulator, not just read: a file that imports a `return M` module *first*
+receives the value, and a later `import` of the same file receives `nil`.)
 
 This is why many otherwise-excellent Lua libraries listed in
 [awesome-playdate](https://github.com/sayhiben/awesome-playdate) are not in the table
-above: they are perfectly good code, but cannot be consumed as **toyboxes** without a
-wrapper that assigns a global.
+above. They are good code; they just cannot be dropped in as **toyboxes** unmodified.
+
+**Adapting one anyway (the shim pattern).** If a library has *no* discoverable entry point
+— no `Boxfile` `lua_import`, and no `<repo>.lua` / `import.lua` at the root or in
+`source/` — then **toybox.py** generates no import line for it, which leaves the first
+import available to you. A thin shim toybox can then adopt it with no vendoring and no
+patching:
+
+```lua
+-- source/import.lua in your shim toybox, which depends on the library
+Noble = import "../../NobleRobot/NobleEngine/Noble"   -- first import: returns the value
+```
+
+That works precisely *because* the library is unpackaged. A library that toybox already
+generates an import for cannot be adapted this way — that generated line is the first
+import and the value is gone by the time your shim runs. Those need a patched copy, or a
+one-line fix upstream.
 
 This table folds in every surviving entry of the original **toystore** registry, whose
 final state (crawled 2024-05-15) is preserved verbatim in
