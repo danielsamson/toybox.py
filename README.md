@@ -238,7 +238,28 @@ Make sure to always run `luacheck` from the root folder of your project in order
 
 ### The toystore (retired)
 
-The **toystore** was an online registry of known **toyboxes** so that they could be referred to by only their names. It was hosted by the original author and was deleted when the project was discontinued, so the `store` subcommands are retired and bare names can no longer be resolved — refer to **toyboxes** by their `username/repo` form or full url instead.
+The **toystore** was an online registry of known **toyboxes** so that they could be referred to by only their names. It was hosted by the original author and was deleted when the project was discontinued, so the `store` subcommands are retired and bare names can no longer be resolved — refer to **toyboxes** by their `username/repo` form or full url instead. (Some library READMEs written in the toystore era still show bare-name commands like `toybox add somelib`; mentally substitute the `username/repo` form.)
+
+### Finding toyboxes
+
+Discovery now happens where the code lives:
+
+- The [`playdate` topic on GitHub](https://github.com/topics/playdate) and a search for the "Toybox Compatible" badge surface most libraries.
+- [awesome-playdate](https://github.com/sayhiben/awesome-playdate) and the [Playdate community wiki](https://playdate-wiki.com/wiki/SDK_Resources) are the curated lists.
+- New libraries are usually announced on the [Playdate Developer Forum](https://devforum.play.date).
+
+Known **toyboxes**, verified alive as of July 2026 — PRs adding entries are welcome:
+
+| Toybox | Add with | Provides |
+|---|---|---|
+| [AnimatedSprite](https://github.com/Whitebrim/AnimatedSprite) | `toybox add Whitebrim/AnimatedSprite` | Sprite class with imagetable animation and a finite state machine (Lua) |
+| [playbox2d](https://github.com/mierau/playbox2d) | `toybox add mierau/playbox2d` | Port of box2d-lite physics to C for the Playdate |
+| [pdDialogue](https://github.com/PlaydateSquad/pdDialogue) | `toybox add PlaydateSquad/pdDialogue` | Dialogue system (Lua) |
+| [PlaydateSequence](https://github.com/NicMagnier/PlaydateSequence) | `toybox add NicMagnier/PlaydateSequence` | Animation sequences built from easing functions (Lua) |
+| [pp-lib](https://github.com/RobertCurry0216/pp-lib) | `toybox add RobertCurry0216/pp-lib` | Platformer building blocks (Lua) |
+| [pd-canvas](https://github.com/danielsamson/pd-canvas) | `toybox add danielsamson/pd-canvas` | Headless canvas rasterizer for testing UIs without the Simulator (Lua, dev/test only) |
+
+Remember that a **toybox** does not have to be listed anywhere, or even know about **toybox.py**, to be usable: any git repo that follows the usual **Playdate** source layout can be added by its `username/repo` or url.
 
 ### Adding the toybox powered badge
 
