@@ -503,9 +503,11 @@ class Toybox:
                 Files.generateIncludeFile(self.dependencies)
                 Files.generateLuacheckFile(self.dependencies)
 
-            folder = Paths.assetsFolder()
-            if os.path.exists(folder):
-                Files.generateReadMeFileIn(folder)
+            # -- No README here, unlike toyboxes/ above. This folder lives INSIDE source/,
+            # -- so pdc compiles its contents into the .pdx — a marker file written here
+            # -- ships in every game built with toybox. The folder is generated, ignored
+            # -- by git and named toybox_assets; that is signal enough without putting
+            # -- toybox's own bookkeeping into somebody's shipped binary.
 
             self.box_file.saveIfModified()
 
@@ -762,6 +764,38 @@ class Toybox:
         print('       - assets: ' + os.path.relpath(source_path) + ' -> ' + os.path.relpath(dest_path) + ' (moved).')
 
         shutil.move(source_path, dest_path)
+
+        skipped = cls.stripDocsFromAssets(dest_path)
+        if skipped:
+            print('         (skipped ' + ', '.join(sorted(skipped)) + ' — documentation, not assets)')
+
+    # -- Anything left in the assets folder is compiled into the .pdx, because pdc copies
+    # -- unrecognised file types by default. A dependency's README is not an asset, and
+    # -- shipping it means every game built with this carries someone else's docs.
+    # --
+    # -- Filtering here rather than telling consumers to pass `pdc -k`: that flag skips
+    # -- unrecognised types WHOLESALE, so a game shipping .txt dialogue or .csv data
+    # -- loses it silently. Trading a few KB of docs for quiet asset loss is a bad deal,
+    # -- and it would also be every consumer working around a problem only this side can
+    # -- fix.
+    # --
+    # -- LICENSE is deliberately NOT in this list. MIT and BSD require the notice to
+    # -- accompany all copies or substantial portions, and a .pdx redistributes the
+    # -- dependency — so a license shipped in an assets folder stays shipped.
+    ASSET_DOC_PREFIXES = ('readme', 'changelog', 'changes', 'contributing', 'code_of_conduct')
+
+    @classmethod
+    def stripDocsFromAssets(cls, folder: str) -> List[str]:
+        skipped = []
+
+        for root, _, filenames in os.walk(folder):
+            for filename in filenames:
+                stem = os.path.splitext(filename)[0].lower()
+                if stem.startswith(cls.ASSET_DOC_PREFIXES):
+                    os.remove(os.path.join(root, filename))
+                    skipped.append(filename)
+
+        return skipped
 
     @classmethod
     def checkForToyboxPyUpdates(cls, force_check=False):

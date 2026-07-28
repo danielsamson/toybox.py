@@ -9,6 +9,7 @@ import stat
 import sys
 
 from toybox.boxfile import Boxfile
+from toybox.toybox import Toybox
 from toybox.files import Files
 from toybox.git import Git
 from toybox.url import Url
@@ -194,3 +195,27 @@ def test_argument_error_exits_nonzero(monkeypatch, capsys):
 
     assert e.value.code == 1
     assert 'no-such-command' in capsys.readouterr().out
+
+
+def test_asset_install_strips_docs_but_keeps_license(tmp_path):
+    # -- source/toybox_assets/ is inside source/, so pdc compiles everything in it into
+    # -- the .pdx — and pdc copies unrecognised file types by default. A dependency's
+    # -- README is not an asset, and it was shipping in every game built with toybox.
+    # --
+    # -- LICENSE must survive: MIT and BSD require the notice to accompany all copies or
+    # -- substantial portions, and a .pdx redistributes the dependency.
+    assets = tmp_path / 'toybox_assets'
+    (assets / 'nested').mkdir(parents=True)
+    for name in ('README.md', 'readme.txt', 'CHANGELOG.md', 'CONTRIBUTING.md',
+                 'LICENSE', 'LICENSE.md', 'icons-table-22-22.png', 'dialogue.txt'):
+        (assets / name).write_text('x')
+    (assets / 'nested' / 'README.rst').write_text('x')
+
+    skipped = Toybox.stripDocsFromAssets(str(assets))
+
+    remaining = sorted(p.name for p in assets.rglob('*') if p.is_file())
+    # -- dialogue.txt is the case that makes `pdc -k` the wrong fix: it is an
+    # -- unrecognised type AND a real asset, so a blanket skip would drop it silently.
+    assert remaining == ['LICENSE', 'LICENSE.md', 'dialogue.txt', 'icons-table-22-22.png']
+    assert sorted(skipped) == ['CHANGELOG.md', 'CONTRIBUTING.md', 'README.md',
+                               'README.rst', 'readme.txt']
