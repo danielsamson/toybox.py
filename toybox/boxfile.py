@@ -177,6 +177,22 @@ class Boxfile:
 
         return None
 
+    def maybeImportOverrides(self) -> dict:
+        # -- config.imports lets a PROJECT say how to consume a dependency that does not
+        # -- package itself: which file is the entry point and what global to bind its
+        # -- return value to. It always beats the bundled registry, so a stale or
+        # -- opinionated default there can never block anyone.
+        # --   "config": { "imports": {
+        # --       "NobleRobot/NobleEngine": { "entry": "Noble", "global": "Noble" },
+        # --       "kikito/middleclass": "middleclass"        <- shorthand: just the global
+        # --   } }
+        if self.json_config:
+            overrides = self.json_config.get('imports')
+            if isinstance(overrides, dict):
+                return overrides
+
+        return None
+
     def maybeAssetsSubFolder(self) -> str:
         if self.json_config:
             return self.json_config.get('assets_sub_folder')

@@ -346,21 +346,47 @@ This is why many otherwise-excellent Lua libraries listed in
 [awesome-playdate](https://github.com/sayhiben/awesome-playdate) are not in the table
 above. They are good code; they just cannot be dropped in as **toyboxes** unmodified.
 
-**Adapting one anyway (the shim pattern).** If a library has *no* discoverable entry point
-— no `Boxfile` `lua_import`, and no `<repo>.lua` / `import.lua` at the root or in
-`source/` — then **toybox.py** generates no import line for it, which leaves the first
-import available to you. A thin shim toybox can then adopt it with no vendoring and no
-patching:
+**Adopting one anyway.** Because **toybox.py** writes that first import, it can write a
+*capturing* one instead, and the value is kept rather than dropped:
 
 ```lua
--- source/import.lua in your shim toybox, which depends on the library
-Noble = import "../../NobleRobot/NobleEngine/Noble"   -- first import: returns the value
+middleclass = import 'github-dot-com/kikito/middleclass/middleclass.lua'
 ```
 
-That works precisely *because* the library is unpackaged. A library that toybox already
-generates an import for cannot be adapted this way — that generated line is the first
-import and the value is gone by the time your shim runs. Those need a patched copy, or a
-one-line fix upstream.
+No shim repo, no vendored copy, no patch, and nothing needed from upstream. Two things
+are required that cannot be guessed — which file is the entry point, and what to call the
+value — so they are declared.
+
+**In your own `Boxfile`**, which always wins:
+
+```json
+{
+    "toyboxes": { "github.com/kikito/middleclass": "4" },
+    "config": {
+        "imports": {
+            "kikito/middleclass": "middleclass",
+            "GamesRightMeow/playbit": { "entry": "playbit/playbit", "global": "playbit" }
+        }
+    }
+}
+```
+
+The string form is shorthand for just the global. `"global": null` suppresses capturing
+for a library that publishes its own global.
+
+**Or from the bundled registry**, [`toybox/registry.py`](toybox/registry.py) — a curated
+table of libraries already known to work this way, so a project (or an automated build)
+gets them with no configuration at all. It is the successor to the toystore: where that
+mapped names to URLs and died with the server hosting it, this maps repos to the packaging
+knowledge you would otherwise have to rediscover, and ships inside the tool. Every entry
+is verified by resolving it and compiling a `.pdx`; PRs are welcome on the same terms.
+
+**What this cannot fix.** A library whose *internal* imports are project-root-relative
+still will not work from inside `toyboxes/`. NobleEngine is the example: `Noble.lua` does
+`import "libraries/noble/modules/..."`, which has no meaning from a dependency folder. An
+entry point and a global are not enough; that needs an upstream change or a vendored copy.
+`registry.py` records the cases like this that were checked and rejected, so nobody has to
+work it out twice.
 
 This table folds in every surviving entry of the original **toystore** registry, whose
 final state (crawled 2024-05-15) is preserved verbatim in

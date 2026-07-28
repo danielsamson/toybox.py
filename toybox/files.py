@@ -10,6 +10,7 @@ from typing import List
 from pathlib import Path
 
 from .boxfile import Boxfile
+from .registry import adaptationFor
 from .dependency import Dependency
 from .paths import Paths
 from .utils import Utils
@@ -92,17 +93,36 @@ class Files:
     def generateLuaIncludeFile(cls, dependencies: List[Dependency]):
         lua_includes = []
 
+        # -- The consuming project can say how to consume a dependency that does not
+        # -- package itself; it overrides the bundled adaptation registry. See
+        # -- registry.py for why an adaptation is needed at all.
+        overrides = Boxfile(Paths.boxfileFolder(), empty_if_does_not_exist=True).maybeImportOverrides()
+
         for dep in dependencies:
             dep_folder = dep.toyboxFolder()
+            adaptation = adaptationFor(dep.url, overrides) or {}
 
             maybe_lua_include_path = Boxfile(dep_folder, empty_if_does_not_exist=True).maybeLuaImportFile()
             if maybe_lua_include_path is not None and maybe_lua_include_path.endswith('.lua'):
                 maybe_lua_include_path = maybe_lua_include_path[:-4]
 
+            # -- An adaptation's entry point wins: it exists precisely for libraries whose
+            # -- own layout tells toybox nothing.
+            if adaptation.get('entry'):
+                entry = adaptation['entry']
+                if entry.endswith('.lua'):
+                    entry = entry[:-4]
+                if len(Utils.lookInFolderFor(dep_folder, entry + '.lua')) != 0:
+                    maybe_lua_include_path = entry
+                else:
+                    print('Warning: adaptation for \'' + dep.url.repo_name + '\' points at \''
+                          + entry + '.lua\', which is not in this version. Ignoring it.')
+
             lua_include_path = Files.findLuaIncludeFileIn(dep_folder, dep.url.repo_name, maybe_lua_include_path)
 
             if lua_include_path is not None:
-                lua_includes.append(os.path.join(dep.subFolder(), lua_include_path))
+                lua_includes.append((os.path.join(dep.subFolder(), lua_include_path),
+                                     adaptation.get('global')))
 
         if len(lua_includes) == 0:
             return
@@ -113,9 +133,18 @@ class Files:
             out_file.write('--\n')
             out_file.write('\n')
 
-            for lua_include in lua_includes:
+            for lua_include, lua_global in lua_includes:
                 # -- We need to always use forward slashes, even on Windows, because pdc expects them
-                out_file.write('import \'' + lua_include.replace('\\', '/') + '.lua\'\n')
+                statement = 'import \'' + lua_include.replace('\\', '/') + '.lua\''
+
+                # -- Playdate's import RETURNS the file's value but runs each file only
+                # -- once, so this generated line is the first import and the only place
+                # -- the value can still be caught. Binding it here is what makes an
+                # -- ordinary `return M` Lua library usable at all. See registry.py.
+                if lua_global:
+                    statement = lua_global + ' = ' + statement
+
+                out_file.write(statement + '\n')
 
             out_file.close()
 
