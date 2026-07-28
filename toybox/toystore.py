@@ -37,6 +37,10 @@ FIELDS
     global     name to bind the imported value to. Omit for libraries that publish their
                own global; setting it there would shadow their API with whatever the file
                returns (usually nil).
+    assets     the folder holding the toybox's assets, when it is not the conventional
+               `assets/`. Plenty of useful asset repos — icon sets especially — keep
+               their Playdate-ready files somewhere else, and toybox would otherwise copy
+               the wrong folder or none at all.
     libpath    for a library that imports its OWN files by a path relative to the PROJECT
                root (rather than to itself), a map of {expected path: subfolder in the
                repo}. toybox builds a search root under toyboxes/.libpath/ containing
@@ -126,6 +130,18 @@ KNOWN = {
         'entry': 'keyboard-based-menu/Menu', 'global': 'Menu',
     },
 
+    # ── asset toyboxes ───────────────────────────────────────────────────────
+    # A toybox may provide just assets. These are copied into
+    # source/toybox_assets/<server>/<user>/<repo>/ and compiled into the .pdx from there.
+    'pictogrammers/memory': {
+        'provides': '1300+ 22x22 pixel icons as a ready-made Playdate imagetable',
+        'assets': 'playdate',
+        'note': 'load it with imagetable.new('
+                '"toybox_assets/github-dot-com/Pictogrammers/Memory/memory"). Its own '
+                'icon.lua expects the table at images/memory, so it is easier to load '
+                'the imagetable directly than to use that helper',
+    },
+
     # ── module libraries: no single entry point, by design ───────────────────
     # These are deliberately a set of independent modules, so there is nothing for
     # toybox to auto-import — and auto-importing all of them would drag every module
@@ -205,7 +221,6 @@ KNOWN = {
 REJECTED = {
     'yonaba/jumper': 'ships only examples/ and specs/ on its default branch — no library tree.',
     'neil-morrison44/drawdate': 'a JavaScript project, not a Lua library.',
-    'pictogrammers/memory': 'an icon set, not a Lua library.',
     'sheep42/prismatic-engine': 'resolves to a CMake/C tree with no importable Lua entry.',
     'mcdevon/taxman-engine': 'a C engine — no Lua files at all. Not a Lua toybox; a C '
                              'toybox would be a separate piece of work.',
@@ -213,6 +228,11 @@ REJECTED = {
 }
 
 ADAPTATION_FIELDS = ('entry', 'global')
+
+
+def assetsFolderFor(url) -> str:
+    """The repo subfolder holding this toybox's assets, or None for the default."""
+    return KNOWN.get(_key(url), {}).get('assets')
 
 
 def libPathsFor(url) -> dict:

@@ -13,6 +13,7 @@ from .url import Url
 from .exceptions import DependencyError
 from .utils import Utils
 from .paths import Paths
+from .toystore import assetsFolderFor
 
 
 class Dependency:
@@ -61,7 +62,10 @@ class Dependency:
         return os.path.join(Paths.toyboxesBackupFolder(), self.subFolder())
 
     def toyboxAssetsFolder(self) -> str:
-        return os.path.join(self.toyboxFolder(), 'assets')
+        # -- 'assets' is the convention, but an asset toybox that predates toybox (an icon
+        # -- set, say) keeps its Playdate-ready files wherever it likes. The toystore can
+        # -- name the real folder so those repos are usable without being repackaged.
+        return os.path.join(self.toyboxFolder(), assetsFolderFor(self.url) or 'assets')
 
     def assetsFolder(self, maybe_sub_folder: str = None) -> str:
         if maybe_sub_folder is None:

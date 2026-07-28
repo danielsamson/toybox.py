@@ -266,6 +266,7 @@ Known **toyboxes**, verified alive as of July 2026 — PRs adding entries are we
 | [librif](https://github.com/risolvipro/librif) | `toybox add risolvipro/librif` | Grayscale image encoding/reading with RLE compression — **C toybox** |
 | [lua-star](https://github.com/wesleywerner/lua-star) | `toybox add wesleywerner/lua-star` | A* pathfinding, pure Lua — imported as `luastar` |
 | [lume](https://github.com/rxi/lume) | `toybox add rxi/lume` | Utility functions geared towards game development — imported as `lume` |
+| [memory](https://github.com/pictogrammers/memory) | `toybox add pictogrammers/memory` | 1300+ 22x22 pixel icons as a ready-made Playdate imagetable — load it with imagetable.new("toybox_assets/github-dot-com/Pictogrammers/Memory/memory"). Its own icon.lua expects the table at images/memory, so it is easier to load the imagetable directly than to use that helper |
 | [middleclass](https://github.com/kikito/middleclass) | `toybox add kikito/middleclass` | OOP: inheritance, metamethods, class variables, mixins — imported as `middleclass` |
 | [nobleengine](https://github.com/noblerobot/nobleengine) | `toybox add noblerobot/nobleengine` | Game engine: scenes, transitions, input, settings, save data — compile with `pdc -I toyboxes/.libpath` — it imports its own modules by project-root path. No global: Noble.lua publishes its own |
 | [pd-options](https://github.com/macvogelsang/pd-options) | `toybox add macvogelsang/pd-options` | Options/settings menu with saved preferences — its Boxfile lua_import says "options.lua" but the file is at source/options.lua, so no import is generated — import it yourself |
@@ -291,14 +292,13 @@ the detail for one entry — including how it is imported — with `toybox store
 <name>`.
 
 <details>
-<summary>Checked and <b>not</b> usable as toyboxes (6)</summary>
+<summary>Checked and <b>not</b> usable as toyboxes (5)</summary>
 
 Recorded so the reasoning is not re-derived. See `toybox store info <name>`.
 
 - **[taxman-engine](https://github.com/mcdevon/taxman-engine)** — a C engine — no Lua files at all. Not a Lua toybox; a C toybox would be a separate piece of work.
 - **[drawdate](https://github.com/neil-morrison44/drawdate)** — a JavaScript project, not a Lua library.
 - **[mini3d-plus](https://github.com/nstbayless/mini3d-plus)** — a C extension plus a demo game, not a Lua library.
-- **[memory](https://github.com/pictogrammers/memory)** — an icon set, not a Lua library.
 - **[prismatic-engine](https://github.com/sheep42/prismatic-engine)** — resolves to a CMake/C tree with no importable Lua entry.
 - **[jumper](https://github.com/yonaba/jumper)** — ships only examples/ and specs/ on its default branch — no library tree.
 
@@ -419,6 +419,17 @@ gets them with no configuration at all. It is the successor to the toystore: whe
 mapped names to URLs and died with the server hosting it, this maps repos to the packaging
 knowledge you would otherwise have to rediscover, and ships inside the tool. Every entry
 is verified by resolving it and compiling a `.pdx`; PRs are welcome on the same terms.
+
+**Asset toyboxes.** A toybox may provide just assets — icons, fonts, images. They are
+copied into `source/toybox_assets/<server>/<user>/<repo>/` and compiled into your `.pdx`
+from there. The convention is a folder called `assets/`, but plenty of useful asset repos
+predate toybox and keep their Playdate-ready files elsewhere, so the toystore can name the
+real folder. Memory's 1300+ icons ship as a Playdate imagetable in `playdate/`:
+
+```lua
+local icons = gfx.imagetable.new("toybox_assets/github-dot-com/Pictogrammers/Memory/memory")
+--> 676 images at 22x22
+```
 
 **Libraries with no single entry point.** Some are deliberately a set of independent
 modules — `knife/timer`, `knife/event`, `plc/sha2`. There is nothing for **toybox.py** to
