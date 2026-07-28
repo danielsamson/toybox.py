@@ -252,12 +252,12 @@ Known **toyboxes**, verified alive as of July 2026 — PRs adding entries are we
 
 | Toybox | Add with | Provides |
 |---|---|---|
-| [acetate](https://github.com/ebeneliason/acetate) | `toybox add ebeneliason/acetate` | Visual sprite-debugging overlay for the Simulator (Lua) |
+| [acetate](https://github.com/ebeneliason/acetate) | `toybox add ebeneliason/acetate` | Visual sprite-debugging overlay for the Simulator (Lua) — see note 1 |
 | [AnimatedSprite](https://github.com/Whitebrim/AnimatedSprite) | `toybox add Whitebrim/AnimatedSprite` | Sprite class with imagetable animation and a finite state machine (Lua) |
-| [easy-pattern](https://github.com/ebeneliason/easy-pattern) | `toybox add ebeneliason/easy-pattern` | Animated 8×8 patterns with easing (Lua) |
+| [easy-pattern](https://github.com/ebeneliason/easy-pattern) | `toybox add ebeneliason/easy-pattern` | Animated 8×8 patterns with easing (Lua) — see note 1 |
 | [LDtkImporter](https://github.com/NicMagnier/PlaydateLDtkImporter) | `toybox add NicMagnier/PlaydateLDtkImporter` | Import LDtk level-editor tilemaps (Lua) |
 | [librif](https://github.com/risolvipro/librif) | `toybox add risolvipro/librif` | Grayscale image encoding/reading with RLE compression (C and Lua) |
-| [pd-options](https://github.com/macvogelsang/pd-options) | `toybox add macvogelsang/pd-options` | Options/settings menu with saved preferences (Lua) |
+| [pd-options](https://github.com/macvogelsang/pd-options) | `toybox add macvogelsang/pd-options` | Options/settings menu with saved preferences (Lua) — see note 2 |
 | [pdDialogue](https://github.com/PlaydateSquad/pdDialogue) | `toybox add PlaydateSquad/pdDialogue` | Dialogue system (Lua) |
 | [pdParticles](https://github.com/PossiblyAxolotl/pdParticles) | `toybox add PossiblyAxolotl/pdParticles` | Particle effects (Lua) — GitHub repo frozen Aug 2025, development moved to Codeberg |
 | [playbox2d](https://github.com/mierau/playbox2d) | `toybox add mierau/playbox2d` | Port of box2d-lite physics to C for the Playdate |
@@ -266,6 +266,39 @@ Known **toyboxes**, verified alive as of July 2026 — PRs adding entries are we
 | [pp-lib](https://github.com/RobertCurry0216/pp-lib) | `toybox add RobertCurry0216/pp-lib` | Platformer building blocks (Lua) |
 | [RobKohr's mono font](https://github.com/RobKohr/robkohr-mono-5x8-font-for-playdate) | `toybox add RobKohr/robkohr-mono-5x8-font-for-playdate` | Readable 5×8 monospaced font |
 | [roomy](https://github.com/RobertCurry0216/roomy-playdate) | `toybox add RobertCurry0216/roomy-playdate` | Stack-based scene management (Lua) |
+
+Two entries need a small workaround today. Both are in the **toyboxes** themselves, not in
+**toybox.py**, and both were found by installing all fourteen into one project and building it.
+
+**Note 1 — `acetate` and `easy-pattern` cannot both be added with default versions.**
+`acetate`'s own `Boxfile` pins `easy-pattern` to `"1"`, but `easy-pattern` has since
+released `2.0.0`, so a bare add of the latter picks `2` and resolution stops:
+
+```console
+Can't resolve version with '>=1.0.0 <2.0.0 >=2.0.0 <3.0.0' for 'github.com/ebeneliason/easy-pattern'.
+```
+
+Pin the major version explicitly and both install:
+
+```console
+toybox add ebeneliason/easy-pattern 1
+```
+
+**Note 2 — `pd-options` installs but generates no import.** Its `Boxfile` declares
+`"lua_import": "options.lua"` while the file ships at `source/options.lua`, and
+`lua_import` is resolved from the repo root without searching subfolders:
+
+```console
+Warning: Could not find file 'options.lua' to import in 'pd-options'.
+```
+
+Until upstream changes that value to `source/options.lua`, import it yourself. `import`
+resolves relative to the importing file, so from `source/main.lua` that is:
+
+```lua
+import '../toyboxes/toyboxes.lua'
+import '../toyboxes/github-dot-com/macvogelsang/pd-options/source/options.lua'
+```
 
 This table folds in every surviving entry of the original **toystore** registry, whose
 final state (crawled 2024-05-15) is preserved verbatim in
