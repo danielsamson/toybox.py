@@ -257,7 +257,6 @@ Known **toyboxes**, verified alive as of July 2026 — PRs adding entries are we
 | [easy-pattern](https://github.com/ebeneliason/easy-pattern) | `toybox add ebeneliason/easy-pattern` | Animated 8×8 patterns with easing (Lua) |
 | [LDtkImporter](https://github.com/NicMagnier/PlaydateLDtkImporter) | `toybox add NicMagnier/PlaydateLDtkImporter` | Import LDtk level-editor tilemaps (Lua) |
 | [librif](https://github.com/risolvipro/librif) | `toybox add risolvipro/librif` | Grayscale image encoding/reading with RLE compression (C and Lua) |
-| [pd-canvas](https://github.com/danielsamson/pd-canvas) | `toybox add danielsamson/pd-canvas` | Headless canvas rasterizer for testing UIs without the Simulator (Lua, dev/test only) |
 | [pd-options](https://github.com/macvogelsang/pd-options) | `toybox add macvogelsang/pd-options` | Options/settings menu with saved preferences (Lua) |
 | [pdDialogue](https://github.com/PlaydateSquad/pdDialogue) | `toybox add PlaydateSquad/pdDialogue` | Dialogue system (Lua) |
 | [pdParticles](https://github.com/PossiblyAxolotl/pdParticles) | `toybox add PossiblyAxolotl/pdParticles` | Particle effects (Lua) — GitHub repo frozen Aug 2025, development moved to Codeberg |
