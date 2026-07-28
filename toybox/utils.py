@@ -15,7 +15,16 @@ from typing import List
 
 def _removeReadonlyAndRetry(func, path, excvalue):
     if func in (os.rmdir, os.remove, os.unlink) and excvalue.errno == errno.EACCES:
-        os.chmod(path, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)  # -- 0777
+        # -- EACCES can come from the entry itself being read-only (the Windows case) or
+        # -- from its parent directory lacking write permission (the POSIX case, where
+        # -- deleting an entry modifies the parent) — open up both before retrying.
+        parent = os.path.dirname(path)
+        if parent and os.path.isdir(parent):
+            os.chmod(parent, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)  # -- 0777
+
+        if os.path.lexists(path):
+            os.chmod(path, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)  # -- 0777
+
         func(path)
     else:
         raise
