@@ -289,11 +289,15 @@ the detail for one entry — including how it is imported — with `toybox store
 <name>`.
 
 <details>
-<summary>Checked and <b>not</b> usable as toyboxes (4)</summary>
+<summary>Checked and <b>not</b> usable as toyboxes (8)</summary>
 
 Recorded so the reasoning is not re-derived. See `toybox store info <name>`.
 
+- **[knife](https://github.com/airstruck/knife)** — a collection of independent modules (knife/timer, knife/event, ...) with no aggregate entry point. toybox generates ONE import per dependency, so there is nothing single to point at. Add it and import the modules you want directly from toyboxes/.
+- **[taxman-engine](https://github.com/mcdevon/taxman-engine)** — a C engine — no Lua files at all. Not a Lua toybox; a C toybox would be a separate piece of work.
 - **[drawdate](https://github.com/neil-morrison44/drawdate)** — a JavaScript project, not a Lua library.
+- **[mini3d-plus](https://github.com/nstbayless/mini3d-plus)** — a C extension plus a demo game, not a Lua library.
+- **[plc](https://github.com/philanc/plc)** — pure-Lua crypto, same shape as knife: many independent modules under plc/ with no aggregate entry. Import the ones you want directly.
 - **[memory](https://github.com/pictogrammers/memory)** — an icon set, not a Lua library.
 - **[prismatic-engine](https://github.com/sheep42/prismatic-engine)** — resolves to a CMake/C tree with no importable Lua entry.
 - **[jumper](https://github.com/yonaba/jumper)** — ships only examples/ and specs/ on its default branch — no library tree.

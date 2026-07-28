@@ -179,12 +179,24 @@ KNOWN = {
     },
 }
 
-# Checked and NOT usable, recorded so nobody re-derives it.
+# Checked and NOT usable as a single Lua toybox, recorded so nobody re-derives it.
+# Three distinct reasons: not a Lua library at all; nothing importable on the default
+# branch; or a collection of independent modules with no aggregate entry point, which
+# toybox cannot represent because it generates exactly one import per dependency.
 REJECTED = {
     'yonaba/jumper': 'ships only examples/ and specs/ on its default branch — no library tree.',
     'neil-morrison44/drawdate': 'a JavaScript project, not a Lua library.',
     'pictogrammers/memory': 'an icon set, not a Lua library.',
     'sheep42/prismatic-engine': 'resolves to a CMake/C tree with no importable Lua entry.',
+    'mcdevon/taxman-engine': 'a C engine — no Lua files at all. Not a Lua toybox; a C '
+                             'toybox would be a separate piece of work.',
+    'nstbayless/mini3d-plus': 'a C extension plus a demo game, not a Lua library.',
+    'airstruck/knife': 'a collection of independent modules (knife/timer, knife/event, ...) '
+                       'with no aggregate entry point. toybox generates ONE import per '
+                       'dependency, so there is nothing single to point at. Add it and '
+                       'import the modules you want directly from toyboxes/.',
+    'philanc/plc': 'pure-Lua crypto, same shape as knife: many independent modules under '
+                   'plc/ with no aggregate entry. Import the ones you want directly.',
 }
 
 ADAPTATION_FIELDS = ('entry', 'global')
