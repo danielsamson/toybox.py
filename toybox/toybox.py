@@ -11,7 +11,7 @@ from typing import List
 
 from .__about__ import __version__
 from .boxfile import Boxfile
-from .exceptions import ArgumentError
+from .exceptions import ArgumentError, VersionsAreBehind
 from .version import Version
 from .dependency import Dependency
 from .git import Git
@@ -98,6 +98,7 @@ class Toybox:
             'add': self.addDependency,
             'remove': self.removeDependency,
             'update': self.update,
+            'latest': self.moveToLatest,
             'check': self.checkForUpdates,
             'store': self.store,
             'set': self.set,
@@ -148,7 +149,8 @@ class Toybox:
         print('   add <name/url> <version> - Add a dependency (version is optional).')
         print('   remove <name/url>        - Remove a dependency.')
         print('   update <name/url>        - Update a dependency or all dependencies if no argument is provided.')
-        print('   check                    - Check for updated toyboxes.')
+        print('   latest <name/url>        - Move pins to the newest RELEASED version, then install (--check to report only).')
+        print('   check                    - Check installed toyboxes against what their pins resolve to.')
         print('   store <subcommand>       - Browse the toyboxes this version knows about.')
         print('   set <name> <value>       - Set a configuration value for this toybox.')
         print('   setupMakefile            - Setup a basic makefile project for using C toyboxes.')
@@ -261,6 +263,103 @@ class Toybox:
             print('You\'re all up to date.')
 
         return something_needs_updating
+
+    def moveToLatest(self):
+        """Move pins to the newest RELEASED version of each dependency.
+
+            toybox latest              every dependency
+            toybox latest <name>       just that one
+            toybox latest --check      report what is behind, change nothing
+
+        Why this is its own command. `update` re-resolves the constraint that is
+        already in the Boxfile, and `check` compares what is installed against what
+        that constraint resolves to. Neither asks what has been RELEASED. So a project
+        pinned at an exact version — which is what a generated or carefully pinned
+        project has — reports itself perfectly up to date forever, no matter how many
+        versions have shipped since. `update` will even downgrade a newer install back
+        to the pin, correctly and silently.
+
+        That blind spot is worth naming because a stale pin has no symptoms: the
+        project resolves, builds, and its tests pass. It simply lacks whatever the
+        newer version added, and you find out from behaviour that makes no sense
+        against documentation describing a version you are not running.
+
+        Only semver pins move. A branch pin ('main') is not a version and already
+        tracks its own tip; a local path is someone's working copy. Moving either
+        because they are 'behind' would be a change nobody asked for.
+        """
+        check_only = self.argument in ('--check', 'check')
+        only = None if check_only else self.argument
+
+        self.box_file = Boxfile(Paths.boxfileFolder())
+        dependencies = self.box_file.dependencies()
+        if len(dependencies) == 0:
+            print('Boxfile is empty.')
+            return
+
+        if only is not None:
+            wanted: Url = Toybox.urlFromArgument(only, self.force_mode)
+            dependencies = [dep for dep in dependencies if dep.url == wanted]
+            if len(dependencies) == 0:
+                raise ArgumentError('No dependency on \'' + only + '\' in this Boxfile.')
+
+        print('Resolving latest versions...')
+        behind = 0
+
+        for dep in dependencies:
+            pinned: List[Version] = dep.versions
+            name = dep.url.as_string
+
+            if len(pinned) != 1 or pinned[0].isBranch() or pinned[0].isLocal():
+                # Not a version pin. Say so rather than skipping in silence — a
+                # dependency quietly left out of an 'update everything' command is
+                # exactly the kind of omission that is noticed months later.
+                print('       - ' + name + ' -> pinned to \'' + str(dep) .split('@', 1)[-1] +
+                      '\', which is not a released version. Left alone.')
+                continue
+
+            latest: Version = dep.git.getLatestVersion()
+            if latest is None:
+                print('       - ' + name + ' -> no released versions to move to.')
+                continue
+
+            current = pinned[0].original_version
+            # Write the pin WITHOUT any 'v' prefix the tag happened to carry. Both
+            # parse, but a Boxfile that reads "0.4.8" for three deps and "v0.6.0" for
+            # the fourth invites someone to wonder whether the difference means
+            # something. It does not.
+            newest = str(latest.asSemVer) if latest.asSemVer is not None else latest.original_version
+            if current == newest or (pinned[0].asSemVer is not None and latest.asSemVer is not None
+                                     and pinned[0].asSemVer >= latest.asSemVer):
+                print('       - ' + name + ' -> ' + current + ' is the latest.')
+                continue
+
+            behind += 1
+            if check_only:
+                print('       - ' + name + ' -> ' + current + ' is behind ' + newest + '.')
+            else:
+                print('       - ' + name + ' -> ' + current + ' becomes ' + newest + '.')
+                self.box_file.addDependencyWithURLAt(dep.url, newest)
+
+        if behind == 0:
+            print('Every pin is already at its latest release.')
+            return
+
+        if check_only:
+            print('')
+            print(str(behind) + ' pin(s) behind. `toybox latest` moves them, then installs.')
+            # A non-zero exit so this is usable as a CI gate, the same way a failing
+            # test is. Printing a warning nobody reads is not a check.
+            raise VersionsAreBehind(behind)
+
+        self.box_file.saveIfModified()
+        print('')
+
+        # Install what we just pinned. Repinning without installing leaves the Boxfile
+        # and toyboxes/ disagreeing, which is a worse state than being behind — the
+        # project now claims a version it is not built against.
+        self.argument = None
+        self.update()
 
     def addDependency(self):
         if self.argument is None:

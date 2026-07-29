@@ -6,7 +6,7 @@ import sys
 import traceback
 
 from .toybox import Toybox
-from .exceptions import ArgumentError
+from .exceptions import ArgumentError, VersionsAreBehind
 
 # -- This enables more debugging information for exceptions.
 _debug_on: bool = False
@@ -25,6 +25,11 @@ def main():
     except ArgumentError as e:
         print(str(e))
 
+        sys.exit(1)
+    except VersionsAreBehind:
+        # `latest --check` already printed which pins are behind and by how much.
+        # Exit non-zero so it works as a CI gate, but say nothing more — a command
+        # that repeats itself on the way out reads like a second, different problem.
         sys.exit(1)
     except Exception as e:
         if _debug_on is True:

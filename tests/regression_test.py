@@ -219,3 +219,138 @@ def test_asset_install_strips_docs_but_keeps_license(tmp_path):
     assert remaining == ['LICENSE', 'LICENSE.md', 'dialogue.txt', 'icons-table-22-22.png']
     assert sorted(skipped) == ['CHANGELOG.md', 'CONTRIBUTING.md', 'README.md',
                                'README.rst', 'readme.txt']
+
+
+# -- `latest`: move pins to the newest RELEASED version ---------------------------------
+#
+# The gap it fills: `update` re-resolves the constraint already in the Boxfile, and
+# `check` compares what is installed against what that constraint resolves to. Neither
+# asks what has been released. So an exact pin — what a generated or carefully pinned
+# project has — reports itself up to date forever, and `update` will even downgrade a
+# newer install back to the pin. A stale pin has no symptoms: it resolves, builds and
+# passes its tests, and simply lacks whatever the newer version added.
+
+def _boxfile(tmp_path, toyboxes):
+    (tmp_path / 'Boxfile').write_text(json.dumps({'toyboxes': toyboxes}, indent=4))
+
+
+def _fake_latest(monkeypatch, available):
+    """Pin each repo's newest released tag, without touching the network.
+
+    Git.url is the full clone URL string, not a Url object, so key off its tail.
+    """
+    def latest(self):
+        name = self.url.rsplit('/', 1)[-1].removesuffix('.git')
+        return Version(available[name]) if available.get(name) else None
+
+    monkeypatch.setattr(Git, 'getLatestVersion', latest)
+
+
+def _run_latest(monkeypatch, argv):
+    monkeypatch.setattr(sys, 'argv', argv)
+    monkeypatch.setattr(Toybox, 'update', lambda self: None)  # no install in a unit test
+    main()
+
+
+def test_latest_moves_an_exact_pin_that_is_behind(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    _boxfile(tmp_path, {'someuser/alpha': '0.4.8', 'someuser/beta': '0.1.0'})
+    _fake_latest(monkeypatch, {'alpha': 'v0.6.0', 'beta': '0.1.0'})
+
+    _run_latest(monkeypatch, ['toybox', 'latest'])
+
+    written = json.loads((tmp_path / 'Boxfile').read_text())['toyboxes']
+    # -- The 'v' prefix the tag carried is dropped: both parse, but a Boxfile that
+    # -- reads "0.1.0" for one dep and "v0.6.0" for another invites someone to wonder
+    # -- whether the difference means something.
+    assert written == {'someuser/alpha': '0.6.0', 'someuser/beta': '0.1.0'}
+
+
+def test_latest_leaves_a_branch_pin_alone(tmp_path, monkeypatch, capsys):
+    # -- A branch is not a version and already tracks its own tip. Moving it because
+    # -- it is "behind" would be a change nobody asked for — but skipping it in
+    # -- SILENCE is how a dependency gets quietly left out of an update-everything.
+    monkeypatch.chdir(tmp_path)
+    _boxfile(tmp_path, {'someuser/alpha': 'main'})
+    _fake_latest(monkeypatch, {'alpha': '0.6.0'})
+
+    _run_latest(monkeypatch, ['toybox', 'latest'])
+
+    assert json.loads((tmp_path / 'Boxfile').read_text())['toyboxes'] == {'someuser/alpha': 'main'}
+    assert 'not a released version' in capsys.readouterr().out
+
+
+def test_latest_check_reports_without_changing_anything(tmp_path, monkeypatch, capsys):
+    monkeypatch.chdir(tmp_path)
+    _boxfile(tmp_path, {'someuser/alpha': '0.4.8'})
+    _fake_latest(monkeypatch, {'alpha': '0.6.0'})
+    monkeypatch.setattr(sys, 'argv', ['toybox', 'latest', '--check'])
+
+    # -- Non-zero so it works as a CI gate, the same way a failing test does.
+    with pytest.raises(SystemExit) as e:
+        main()
+
+    assert e.value.code == 1
+    assert '0.4.8 is behind 0.6.0' in capsys.readouterr().out
+    assert json.loads((tmp_path / 'Boxfile').read_text())['toyboxes'] == {'someuser/alpha': '0.4.8'}
+
+
+def test_latest_check_is_quiet_and_zero_when_current(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    _boxfile(tmp_path, {'someuser/alpha': '0.6.0'})
+    _fake_latest(monkeypatch, {'alpha': '0.6.0'})
+    monkeypatch.setattr(sys, 'argv', ['toybox', 'latest', '--check'])
+
+    main()   # -- no SystemExit: nothing is behind
+
+
+def test_latest_never_moves_a_pin_backwards(tmp_path, monkeypatch):
+    # -- A pin ahead of the newest visible tag is not "behind". Rewriting it would be
+    # -- a silent downgrade, which is exactly what `update` already does to a newer
+    # -- install and the reason this command exists.
+    monkeypatch.chdir(tmp_path)
+    _boxfile(tmp_path, {'someuser/alpha': '0.7.0'})
+    _fake_latest(monkeypatch, {'alpha': '0.6.0'})
+
+    _run_latest(monkeypatch, ['toybox', 'latest'])
+
+    assert json.loads((tmp_path / 'Boxfile').read_text())['toyboxes'] == {'someuser/alpha': '0.7.0'}
+
+
+def test_latest_can_target_one_dependency(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    _boxfile(tmp_path, {'someuser/alpha': '0.4.8', 'someuser/beta': '0.1.0'})
+    _fake_latest(monkeypatch, {'alpha': '0.6.0', 'beta': '0.9.0'})
+
+    _run_latest(monkeypatch, ['toybox', 'latest', 'someuser/alpha'])
+
+    written = json.loads((tmp_path / 'Boxfile').read_text())['toyboxes']
+    assert written == {'someuser/alpha': '0.6.0', 'someuser/beta': '0.1.0'}
+
+
+def test_latest_on_a_dependency_not_in_the_boxfile_says_so(tmp_path, monkeypatch, capsys):
+    monkeypatch.chdir(tmp_path)
+    _boxfile(tmp_path, {'someuser/alpha': '0.4.8'})
+    _fake_latest(monkeypatch, {'alpha': '0.6.0'})
+    monkeypatch.setattr(sys, 'argv', ['toybox', 'latest', 'someuser/nope'])
+
+    with pytest.raises(SystemExit) as e:
+        main()
+
+    assert e.value.code == 1
+    assert 'No dependency on' in capsys.readouterr().out
+
+
+def test_repinning_replaces_the_entry_rather_than_adding_a_second(tmp_path, monkeypatch):
+    # -- A Boxfile may spell an entry short while Url.as_string is always canonical, so
+    # -- keying off as_string added a SECOND entry for the same dependency. Both then
+    # -- resolved, and re-pinning looked like it had simply not taken. Affects `add
+    # -- <existing-dep> <version>` too, not just `latest`.
+    monkeypatch.chdir(tmp_path)
+    _boxfile(tmp_path, {'someuser/alpha': '0.4.8'})
+
+    box = Boxfile(str(tmp_path))
+    box.addDependencyWithURLAt(Url('someuser/alpha'), '0.6.0')
+    box.saveIfModified()
+
+    assert json.loads((tmp_path / 'Boxfile').read_text())['toyboxes'] == {'someuser/alpha': '0.6.0'}

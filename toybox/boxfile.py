@@ -73,8 +73,16 @@ class Boxfile:
         if self.json_toyboxes is None:
             self.json_toyboxes = self.json_content['toyboxes'] = {}
 
-        self.json_toyboxes[url.as_string] = at
-        self.url_to_string[url] = url.as_string
+        # -- Write back under the key this Boxfile ALREADY uses for the dependency, if
+        # -- it has one. A Boxfile may spell an entry short ('someuser/repo') while
+        # -- Url.as_string is always canonical ('github.com/someuser/repo'), so keying
+        # -- off as_string added a SECOND entry for the same dependency instead of
+        # -- changing the first. Both entries then resolved, and re-pinning looked like
+        # -- it had simply not taken.
+        key = self.stringForUrl(url) or url.as_string
+
+        self.json_toyboxes[key] = at
+        self.url_to_string[url] = key
 
         self.was_modified = True
 

@@ -64,7 +64,8 @@ info                     - List your current dependencies.
 add <name/url> <version> - Add a new dependency (version is optional).
 remove <name/url>        - Remove a dependency.
 update <name/url>        - Update a dependency or all dependencies if no argument is provided.
-check                    - Check for updated toyboxes.
+latest <name/url>        - Move pins to the newest RELEASED version, then install (--check to report only).
+check                    - Check installed toyboxes against what their pins resolve to.
 store <subcommand>       - Retired: the toystore went away with the original project.
 set <name> <value>       - Set a configuration value for this toybox.
 setupMakefile            - Setup a basic makefile project for using C toyboxes.
@@ -158,6 +159,28 @@ toybox -l <folder> update
 ```
 
 This will update all your dependencies and for any of those, if the **toybox** is found inside `folder` then this local version will be used instead. You can then simply use a regular `toybox update` to put everything back in place and use the online content of the repos again.
+
+#### Moving to the latest releases
+
+`update` re-resolves the version constraint that is **already in your Boxfile**. It does not look for newer releases, and it is not supposed to — that is what makes a build reproducible. So a project pinned at an exact version (`"0.4.8"`) resolves to that version forever, however many have shipped since, and `update` will even put a newer install back down to the pin.
+
+To move the pins themselves, use `latest`:
+
+```console
+toybox latest <name/url>
+```
+
+It finds the newest released version of each dependency, rewrites the pin, and then installs — so the `Boxfile` and `toyboxes/` never disagree about what the project is built against. With no argument it does every dependency; with one, only that dependency.
+
+Pins that are not released versions are left alone and said so out loud: a branch (`main`) already tracks its own tip, and a local path is someone's working copy. Neither is "behind".
+
+To see what would change without changing anything:
+
+```console
+toybox latest --check
+```
+
+This exits non-zero when something is behind, so it works as a CI gate or a pre-release step. That matters more than it sounds: a stale pin has no symptoms. The project resolves, builds, and its tests pass — it simply lacks whatever the newer version added, and you find out from behaviour that makes no sense against documentation describing a version you are not running.
 
 #### Checking for updates
 
