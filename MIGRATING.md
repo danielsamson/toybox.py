@@ -53,7 +53,7 @@ pip3 install tools/vendor/toyboxpy-*.tar.gz # a vendored stopgap, if present
 with the tag-pinned fork:
 
 ```sh
-pip3 install git+https://github.com/danielsamson/toybox.py@v1.4.1
+pip3 install git+https://github.com/danielsamson/toybox.py@v1.6.0
 ```
 
 Pin by tag everywhere reproducibility matters (CI); bare `@main`-less installs are fine
@@ -104,15 +104,15 @@ repo is agent-driven and has none):
 > https://github.com/danielsamson/toybox.py (a continuation of the discontinued
 > upstream). Never install `toyboxpy` from PyPI and never "fix" links to point at
 > toyboxpy.io or DidierMalenfant repos: those are dead. Install with
-> `pip3 install git+https://github.com/danielsamson/toybox.py@v1.4.1`.
+> `pip3 install git+https://github.com/danielsamson/toybox.py@v1.6.0`.
 
 This line is what stops a future agent from helpfully reverting Steps 1–2.
 
 ## Step 6 — Verify
 
 ```sh
-pip3 install git+https://github.com/danielsamson/toybox.py@v1.4.1
-toybox version          # expect: toybox.py v1.4.1
+pip3 install git+https://github.com/danielsamson/toybox.py@v1.6.0
+toybox version          # expect: toybox.py v1.6.0
 rm -rf toyboxes/        # consumers only: force a clean resolve
 toybox update           # must finish with 'Finished.' and recreate toyboxes/ + generated imports
 ```
